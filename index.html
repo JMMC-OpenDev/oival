@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<div xmlns="http://www.w3.org/1999/xhtml" class="templates:surround?with=templates/page.html&amp;at=content">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-6">
+                <h1> Welcome on the OIFitsV1.0 validator</h1>
+                <p>
+                </p>
+            </div>
+            <div class="col-md-6">
+                <h1>TBD</h1>
+            </div>
+        </div>
+        <form class="form-horizontal" role="form" enctype="multipart/form-data" action="./validate.xql" target="NewPage" method="post">
+            <div class="row">
+                <div class="form-group col-md-3">
+                    <label for="userfile">Upload an OIFits file :</label>
+                    <input type="file" name="userfile" id="userfile" size="65"/>
+                    <p class="help-block">'gzip' compressed files can be used to minimize upload times. <br/>No data is stored on server side.</p>
+                </div>
+                <div class="form-group col-md-8">
+                    <label for="urls"> or Enter url(s) of OIFits file(s) :</label>
+                    <textarea class="form-control" rows="3" name="urls" id="urls"/>
+                    <!--<p class="help-block"></p>-->
+                </div>
+            </div>
+            <div class="form-group">
+                <button type="submit" class="btn btn-default">View/Validate</button>
+            </div>
+        </form>
+        <br/>
+        <br/>
+        <p class="pager">Please <a href="http://www.jmmc.fr/support">send your feedback</a>.<br/>
+            <a href="http://www.jmmc.fr">
+                <img src="http://www.jmmc.fr/images/jmmc_large.jpg"/>
+            </a>
+        </p>
+    </div>
+</div>

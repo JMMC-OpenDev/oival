@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<meta xmlns="http://exist-db.org/xquery/repo">
+    <description>VO Application Registry</description>
+    <author/>
+    <website/>
+    <status>alpha</status>
+    <license/>
+    <copyright>true</copyright>
+    <type>application</type>
+    <target>oival</target>
+    <prepare>pre-install.xql</prepare>
+    <finish/>
+    <note/>
+    <changelog>
+        <change xmlns="" version="0.1">
+            <h3>First release of new refactored oival - June 2014 </h3>
+            <ul>
+              <li>Shares the same java oifits librarie with <a href="http://oidb.jmmc.fr">oidb</a> to provide granules informations</li>
+              <li>TODO: handle multiple files/urls in input</li>
+            </ul>
+        </change>
+    </changelog>
+</meta>
