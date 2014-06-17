@@ -12,11 +12,17 @@
     <finish/>
     <note/>
     <changelog>
-        <change xmlns="" version="0.1">
+        <!-- We start from 2.0 to follow previous oival versions ( php + system call ) -->
+        <change xmlns="" version="2.0">
             <h3>First release of new refactored oival - June 2014 </h3>
             <ul>
-              <li>Shares the same java oifits librarie with <a href="http://oidb.jmmc.fr">oidb</a> to provide granules informations</li>
-              <li>TODO: handle multiple files/urls in input</li>
+                <li>Shares the same java oifits librarie with <a href="http://oidb.jmmc.fr">oidb</a> to provide granules informations</li>
+                <li>TODO:<ul>
+                        <li>handle upload of multiple files in input</li>
+                        <li>improve presentation of targets accross multiple files</li>
+                        <li>provide plots (from oiexplorer)</li>
+                    </ul>
+                </li>
             </ul>
         </change>
     </changelog>

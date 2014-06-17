@@ -25,21 +25,12 @@ declare function app:show-html($xml as node()*) {
         let $filename := tokenize($xml/url||$xml/filename,"/")[last()]
         let $oitables := $xml//oifits/*[starts-with(name(.),"OI_")] 
         return
-            (<ul>
-                <li><a href="#oifits{$uuid}">{$filename}</a>
-                <ul>
-                    <li><a href="#granules{$uuid}">Granules ({count($xml//metadata//target)})</a></li>
-                    <li><a href="#report{$uuid}">Validation Report</a></li>
-                    <li><a href="#tables{$uuid}">OI_Tables ({count($oitables)})</a></li>
-                </ul>
-                </li>
-            </ul>,
-            <div>
-                <a name="oifits{$uuid}"/>
-                {$xml/url||$xml/filename}
+            <div class="panel panel-default" id="oifits{$uuid}">
+                <div class="panel-body">
                 <!-- Nav bar -->
                 <nav  class="navbar navbar-default navbar-static" role="navigation">
                     <ul class="nav navbar-nav">
+                    <li><p class="navbar-text"><b>{$xml/url||$xml/filename}</b></p></li>
                     <li><a href="#granules{$uuid}">Granules ({count($xml//metadata//target)})</a></li>
                     <li ><a href="#report{$uuid}">Check report</a></li>
                     <li class="dropdown">
@@ -56,13 +47,12 @@ declare function app:show-html($xml as node()*) {
                   <li></li>
                 </ul>
                 </nav>
-                
                 <div>
-                        <ol id="granules{$uuid}"class="breadcrumb">
-                                              <li><a href="#top">TOP^</a></li>
-                                              <li><a href="#oifits{$uuid}">OIFits</a></li>
-                                              <li class="active">Granules</li>
-                                            </ol>
+                        <ol id="granules{$uuid}" class="breadcrumb">
+                          <li><a href="#top">TOP^</a></li>
+                          <li><a href="#oifits{$uuid}">OIFits</a></li>
+                          <li class="active">Granules</li>
+                        </ol>
                         {
                             for $meta in $xml//metadata
                             return <table class="table table-bordered table-condensed table-hover">
@@ -75,21 +65,21 @@ declare function app:show-html($xml as node()*) {
                                     }
                             </table>
                         }
-                        <ol class="breadcrumb">
-                                              <li><a href="#top">TOP^</a></li>
-                                              <li><a href="#oifits{$uuid}">OIFits</a></li>
-                                              <li class="active">Check report</li>
-                                            </ol>
-                                    
-                        <pre id="report{$uuid}">{data($xml//checkReport)}</pre>
+                        
+                        <ol id="report{$uuid}" class="breadcrumb">
+                          <li><a href="#top">TOP^</a></li>
+                          <li><a href="#oifits{$uuid}">OIFits</a></li>
+                          <li class="active">Check report</li>
+                        </ol>
+                        <pre>{data($xml//checkReport)}</pre>
                         
                         <ol id="tables{$uuid}" class="breadcrumb">
-                                              <li><a href="#top">TOP^</a></li>
-                                              <li><a href="#oifits{$uuid}">OIFits</a></li>
-                                              <li class="active">OI_Tables</li>
-                                            </ol>
+                          <li><a href="#top">TOP^</a></li>
+                          <li><a href="#oifits{$uuid}">OIFits</a></li>
+                          <li class="active">OI_Tables</li>
+                        </ol>
                         <p> This file gets {count($oitables)} OI tables:
-                            <ul>{
+                            <ul class="list-inline">{
                                 for $oidata at $pos in $oitables
                                 let $label := "#"||$pos||" "||name($oidata)
                                 let $anchor := "table_"||$pos||"_"||$uuid
@@ -101,57 +91,43 @@ declare function app:show-html($xml as node()*) {
                             let $label := "#"||$pos||" "||name($oidata)
                             let $anchor := "table_"||$pos||"_"||$uuid
                             return 
-                                <div id="{$anchor}">
+                                <div class="panel panel-default" id="{$anchor}">
                                     <ol class="breadcrumb">
-                                              <li><a href="#top">TOP^</a></li>
-                                              <li><a href="#oifits{$uuid}">OIFits</a></li>
-                                              <li><a href="#tables{$uuid}">Tables</a></li>
-                                              <li class="active">{$label}</li>
-                                            </ol>
-                                    <p> This table gets {data($oidata/rows)} rows.</p>         
-                                    <ol class="breadcrumb">
-                                              <li><a href="#top">TOP^</a></li>
-                                              <li><a href="#oifits{$uuid}">OIFits</a></li>
-                                              <li><a href="#tables{$uuid}">Tables</a></li>
-                                              <li><a href="#{$anchor}">{$label}</a></li>
-                                              <li class="active">Keywords</li>
-                                            </ol>
+                                      <li><a href="#top">TOP^</a></li>
+                                      <li><a href="#oifits{$uuid}">OIFits</a></li>
+                                      <li><a href="#tables{$uuid}">Tables</a></li>
+                                      <li class="active">{$label} ({data($oidata/rows)} rows)</li>
+                                    </ol>
+                                    <h4>Keywords</h4>
                                     <table class="table table-bordered table-condensed table-hover"><tr>{
-                                        for $t in $oidata/keywords/keyword[1]/* return <th>{name($t)}</th>
-                                    }</tr>
-                                    {
+                                    for $t in $oidata/keywords/keyword[1]/* return <th>{name($t)}</th>
+                                    }</tr>{
                                         for $k in $oidata/keywords/keyword return <tr> {for $e in $k/* return <td>{data($e)}</td>}</tr>
                                     }</table>
+                            
                                     {
-                                        if(name($oidata)=("OI_TARGET","OI_ARRAY","OI_WAVELENGTH"))
-                                        then
-                                            (<ol class="breadcrumb">
-                                              <li><a href="#top">TOP^</a></li>
-                                              <li><a href="#oifits{$uuid}">OIFits</a></li>
-                                              <li><a href="#tables{$uuid}">Tables</a></li>
-                                              <li><a href="#{$anchor}">{$label}</a></li>
-                                              <li class="active">Table data</li>
-                                            </ol>
-                                            ,
-                                            <table class="table table-bordered table-condensed table-hover"><tr>{
-                                                for $c in $oidata/columns/column 
-                                                    let $unit := tokenize($c/unit,"\|")
-                                                    let $unit := if(exists($unit)) then concat("[",$unit[last()],"]") else ()
-                                                    return 
-                                                    <th><a title="{$c/description}">{data($c/name)} {$unit}</a></th>
+                                    if(name($oidata)=("OI_TARGET","OI_ARRAY","OI_WAVELENGTH"))
+                                    then
+                                        (<h4>Table data</h4>
+                                        ,<table class="table table-bordered table-condensed table-hover"><tr>{
+                                            for $c in $oidata/columns/column 
+                                                let $unit := tokenize($c/unit,"\|")
+                                                let $unit := if(exists($unit)) then concat(" [",$unit[last()],"]") else ()
+                                                return 
+                                                <th><a title="{$c/description}">{data($c/name)} {$unit}</a></th>
                                             }</tr>
                                             {
                                                $oidata/table/tr[td]
-                                            }</table>)
-                                        else ()
+                                            }
+                                        </table>)
+                                    else ()
                                     }
-                                    
                                 </div>
                         }
                     
                 </div>
-        </div>)
-
+            </div>
+        </div>
 };
 
 (: To be refactored using template when validate.html will be ready :)
@@ -178,30 +154,28 @@ declare function app:validate() {
                 }</records>
     
     let $res := <div >
-    <div class="col-md-12" id="top">
-        <ul class="nav">
-            <li>Targets
-                <ul>
-                    {
-                        for $target in distinct-values($ret//target_name)
-                            return <li>{data($target)}</li>
-                    }
+    { if (count($records//nav)>1) then
+        <div class="col-md-12" id="top">
+            <ul class="nav">
+                <li>Targets
+                    <ul>
+                        {
+                            for $target in distinct-values($ret//target_name)
+                                return <li>{data($target)}</li>
+                        }
+                    </ul>
+                </li>
+                <li>OIfits files
+                <ul class="list-inline">
+                    {$records//nav}
                 </ul>
-            </li>
-            <li>OIfits files
-            { for $e in $records/ul return $e/li }
-            </li>
-            
-        </ul>
+                </li>
+            </ul>
     </div>
-    <div class="col-md-12">
-        <ul class="list-group">
-            { 
-                for $e in $records/div
-                return <li class="list-group-item">{$e}</li>
-            }
-        </ul>
-    </div>
+    else ()
+    }
+
+    <div class="col-md-12">{ $records/div }</div>
     </div>
     
     return $res
