@@ -23,19 +23,15 @@
                         <span class="icon-bar"/>
                         <span class="icon-bar"/>
                     </button>
-                    <a class="navbar-brand" data-template="config:app-title" href="index.html">App Title</a>
+                    <ul class="nav navbar-nav brand">
+                        <!-- JMMC menu -->
+                        <li data-template="jmmc-web:navbar-li"/>
+                    </ul>
                 </div>
                 <div class="collapse navbar-collapse" id="bs-example-navbar-collapse-1">
                     <ul class="nav navbar-nav">
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">Home <b class="caret"/>
-                            </a>
-                            <ul class="dropdown-menu">
-                                <li>
-                                    <a href="index.html">
-                                        <span class="glyphicon glyphicon-home"/> Home page</a>
-                                </li>
-                            </ul>
+                        <li>
+                            <a data-template="config:app-title" href="index.html">App Title</a>
                         </li>
                         <li class="dropdown">
                             <a href="#" class="dropdown-toggle" data-toggle="dropdown">Help <b class="caret"/>
@@ -52,10 +48,6 @@
                                 </li>
                             </ul>
                         </li>
-                    </ul>
-                    <ul class="nav navbar-nav navbar-right">
-                        <!-- JMMC menu -->
-                        <li data-template="jmmc-web:navbar-li"/>
                     </ul>
                 </div>
             </div>
