@@ -144,7 +144,7 @@ declare function app:validate() {
     let $ret2 := if($upload-filename) then 
         <record>
             <filename>{$upload-filename}</filename>
-            {jmmc-oiexplorer:to-xml-base64(request:get-uploaded-file-data("userfile"))}
+            {jmmc-oiexplorer:to-xml(request:get-uploaded-file-data("userfile"))}
         </record>
         else ()
     
