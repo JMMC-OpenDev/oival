@@ -20,10 +20,11 @@ import module namespace jmmc-oiexplorer="http://exist.jmmc.fr/jmmc-resources/oie
    TODO add xqldoc, and split code in multiple functions
  :)
 declare function app:show-html($xml as node()*) {
-    let $uuid := util:uuid()
-    return for $oifits in $xml//oifits
+    for $oifits in $xml//oifits (: there should be only one oifits :)
+        let $uuid := util:uuid()
         let $filename := tokenize($xml/url||$xml/filename,"/")[last()]
-        let $oitables := $xml//oifits/*[starts-with(name(.),"OI_")] 
+        let $oitables := $xml//oifits/*[starts-with(name(.),"OI_")]
+        let $prim-hdu-keywords := $oifits/keywords/keyword
         return
             <div class="panel panel-default" id="oifits{$uuid}">
                 <div class="panel-body">
@@ -32,6 +33,7 @@ declare function app:show-html($xml as node()*) {
                     <ul class="nav navbar-nav">
                     <li><p class="navbar-text"><b>{$xml/url||$xml/filename}</b></p></li>
                     <li><a href="#granules{$uuid}">Granules ({count($xml//metadata//target)})</a></li>
+                    { if ($prim-hdu-keywords) then <li><a href="#prim-hdu-keywords-{$uuid}">Primary HDU keywords ({count($prim-hdu-keywords)})</a></li> else () }
                     <li ><a href="#report{$uuid}">Check report</a></li>
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">OI_Tables ({count($oitables)}) <b class="caret"></b></a>
@@ -72,6 +74,41 @@ declare function app:show-html($xml as node()*) {
                           <li class="active">Check report</li>
                         </ol>
                         <pre>{data($xml//checkReport)}</pre>
+                        
+                        { if ( $prim-hdu-keywords ) then
+                        (<ol id="prim-hdu-keywords-{$uuid}" class="breadcrumb">
+                          <li><a href="#top">TOP^</a></li>
+                          <li><a href="#oifits{$uuid}">OIFits</a></li>
+                          <li class="active">Primary HDU keywords</li>
+                        </ol>,
+                        <p> 
+                            <button data-toggle="modal" data-target="#hdu-keywords-{$uuid}">Display primary HDU keywords ({count($prim-hdu-keywords)}) </button>
+                            
+                            <!-- Modal view for primary HDU keywords -->
+                            <div class="modal fade" id="hdu-keywords-{$uuid}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
+                              <div class="modal-dialog">
+                                <div class="modal-content">
+                                  <div class="modal-header">
+                                    <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">X</span><span class="sr-only">Close</span></button>
+                                    <h4 class="modal-title" id="myModalLabel">Primary HDU keywords for <b>{$filename}</b></h4>
+                                  </div>
+                                  <div class="modal-body">
+                                  <table class="table table-bordered table-condensed table-hover">
+                                  {
+                                    for $k in $prim-hdu-keywords
+                                    return <tr><th>{$k/name/text()}</th><td>{$k/value/text()}</td><td><i title="{$k/description/text()}" class="glyphicon glyphicon-question-sign"/></td></tr>
+                                  }
+                                  </table>
+                                  </div>
+                                  <div class="modal-footer">
+                                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>                            
+                        </p>)
+                        else <p>No primary HDU keywords</p>
+                        }
                         
                         <ol id="tables{$uuid}" class="breadcrumb">
                           <li><a href="#top">TOP^</a></li>
@@ -132,50 +169,44 @@ declare function app:show-html($xml as node()*) {
 
 (: To be refactored using template when validate.html will be ready :)
 declare function app:validate() {  
-    
+    (: read input params :)
     let $urls := request:get-parameter("urls", ())
     let $url-list := for $u in $urls return tokenize($u, "[,\s]+")
-    let $ret1 := for $u in $url-list 
-    return <record><url>{$u}</url>
-    {jmmc-oiexplorer:to-xml($u)}
-    </record>
-    
     let $upload-filename := request:get-uploaded-file-name("userfile")
-    let $ret2 := if($upload-filename) then 
-        <record>
-            <filename>{$upload-filename}</filename>
-            {jmmc-oiexplorer:to-xml(request:get-uploaded-file-data("userfile"))}
-        </record>
-        else ()
     
+    (: build one record per oifits source:)
+    let $ret1 := for $u in $url-list return <record><url>{$u}</url>{jmmc-oiexplorer:to-xml($u)}</record>
+    let $ret2 := if($upload-filename) then <record><filename>{$upload-filename}</filename>{jmmc-oiexplorer:to-xml(request:get-uploaded-file-data("userfile"))}</record> else ()
     let $ret := ($ret1,$ret2)
-    let $records := <records>{   
-                    for $e in $ret return app:show-html($e)
-                }</records>
     
+    (: transform each record into html :)
+    let $records := <records>{ for $e in $ret return app:show-html($e)}</records>
+    
+    (: and summarize the whole results :)
     let $res := <div >
-    { if (count($records//nav)>1) then
-        <div class="col-md-12" id="top">
-            <ul class="nav">
-                <li>Targets
-                    <ul>
-                        {
+        {
+            if (count($records//nav)>1) then
+                <div class="col-md-12" id="top">
+                    <ul class="nav">
+                        <li>Targets
+                            <ul>
+                            {
                             for $target in distinct-values($ret//target_name)
                                 return <li>{data($target)}</li>
-                        }
+                            }
+                            </ul>
+                        </li>
+                        <li>OIfits files
+                            <ul class="list-inline">
+                                {$records//nav}
+                            </ul>
+                        </li>
                     </ul>
-                </li>
-                <li>OIfits files
-                <ul class="list-inline">
-                    {$records//nav}
-                </ul>
-                </li>
-            </ul>
-    </div>
-    else ()
-    }
-
-    <div class="col-md-12">{ $records/div }</div>
+                </div>
+                else 
+                ()
+        }
+        <div class="col-md-12">{ $records/div }</div>
     </div>
     
     return $res
