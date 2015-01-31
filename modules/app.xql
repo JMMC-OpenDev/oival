@@ -16,6 +16,15 @@ import module namespace jmmc-oiexplorer="http://exist.jmmc.fr/jmmc-resources/oie
 };
 :)
 
+declare function app:format-check-report($report as xs:string) as node()*{
+  let $lines := tokenize($report, "&#10;")
+  let $styles := <styles><s><t>INFO</t><c>text-info</c></s><s><t>WARNING</t><c>text-warning</c></s><s><t>SEVERE</t><c>text-danger</c></s></styles>
+  let $els := for $line in $lines  
+                    let $class:=for $t in $styles//t return if(starts-with(normalize-space($line), $t)) then data($styles//s[t=$t]/c) else () 
+                    return <li class="{$class}">{$line}</li>
+  return <ul class="list-unstyled">{$els}</ul>
+};
+
 (: 
    TODO add xqldoc, and split code in multiple functions
  :)
@@ -25,6 +34,9 @@ declare function app:show-html($xml as node()*) {
         let $filename := tokenize($xml/url||$xml/filename,"/")[last()]
         let $oitables := $xml//oifits/*[starts-with(name(.),"OI_")]
         let $prim-hdu-keywords := $oifits/keywords/keyword
+        let $check-report := $xml//checkReport
+        let $chech-report-severity := if(matches($check-report, "SEVERE")) then "danger" else if(matches($check-report, "WARNING")) then "warning" else ()
+        
         return
             <div class="panel panel-default" id="oifits{$uuid}">
                 <div class="panel-body">
@@ -34,7 +46,7 @@ declare function app:show-html($xml as node()*) {
                     <li><p class="navbar-text"><b>{$xml/url||$xml/filename}</b></p></li>
                     <li><a href="#granules{$uuid}">Granules ({count($xml//metadata//target)})</a></li>
                     { if ($prim-hdu-keywords) then <li><a href="#prim-hdu-keywords-{$uuid}">Primary HDU keywords ({count($prim-hdu-keywords)})</a></li> else () }
-                    <li ><a href="#report{$uuid}">Check report</a></li>
+                    <li ><a href="#report{$uuid}">Check report&#160;{if($chech-report-severity) then <i class="glyphicon glyphicon-warning-sign"/> else ()}</a></li>
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">OI_Tables ({count($oitables)}) <b class="caret"></b></a>
                         <ul class="dropdown-menu">
@@ -73,7 +85,7 @@ declare function app:show-html($xml as node()*) {
                           <li><a href="#oifits{$uuid}">OIFits</a></li>
                           <li class="active">Check report</li>
                         </ol>
-                        <pre>{data($xml//checkReport)}</pre>
+                        {app:format-check-report($check-report)}
                         
                         { if ( $prim-hdu-keywords ) then
                         (<ol id="prim-hdu-keywords-{$uuid}" class="breadcrumb">

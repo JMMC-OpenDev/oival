@@ -13,6 +13,12 @@
     <note/>
     <changelog>
         <!-- We start from 2.0 to follow previous oival versions ( php + system call ) -->
+        <change xmlns="" version="2.2">
+            <h3>Jan 2015</h3>
+            <ul>
+              <li>Highlight errors on the check report</li>
+            </ul>
+        </change>
         <change xmlns="" version="2.1">
             <h3>Oct 2014</h3>
             <ul>
