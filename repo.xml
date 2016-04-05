@@ -13,6 +13,12 @@
     <note/>
     <changelog>
         <!-- We start from 2.0 to follow previous oival versions ( php + system call ) -->
+        <change xmlns="" version="2.3">
+            <h3>Apr 2016</h3>
+            <ul>
+              <li>throw a warning message if observation dates of a table seem out of bound</li>
+            </ul>
+        </change>
         <change xmlns="" version="2.2">
             <h3>Jan 2015</h3>
             <ul>
