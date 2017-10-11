@@ -13,6 +13,12 @@
     <note/>
     <changelog>
         <!-- We start from 2.0 to follow previous oival versions ( php + system call ) -->
+        <change xmlns="" version="2.4">
+            <h3>Oct 2017</h3>
+            <ul>
+              <li>First support of OIFITS V2</li>
+            </ul>
+        </change>
         <change xmlns="" version="2.3">
             <h3>Apr 2016</h3>
             <ul>
