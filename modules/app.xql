@@ -39,26 +39,34 @@ declare function app:show-html($xml as node()*) {
         
         return
             <div class="panel panel-default" id="oifits{$uuid}">
+                <div class="panel-heading">
+                    <h3 class="panel-title">
+                        <b>{$xml/url||$xml/filename}</b>
+                    </h3>
+                </div>
                 <div class="panel-body">
                 <!-- Nav bar -->
                 <nav  class="navbar navbar-default navbar-static" role="navigation">
                     <ul class="nav navbar-nav">
-                    <li><p class="navbar-text"><b>{$xml/url||$xml/filename}</b></p></li>
-                    <li><a href="#granules{$uuid}">Granules ({count($xml//metadata//target)})</a></li>
-                    { if ($prim-hdu-keywords) then <li><a href="#prim-hdu-keywords-{$uuid}">Primary HDU keywords ({count($prim-hdu-keywords)})</a></li> else () }
-                    <li ><a href="#report{$uuid}">Check report&#160;{if($chech-report-severity) then <i class="glyphicon glyphicon-warning-sign"/> else ()}</a></li>
-                    <li class="dropdown">
-                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">OI_Tables ({count($oitables)}) <b class="caret"></b></a>
-                        <ul class="dropdown-menu">
-                         {
-                         for $oidata at $pos in $oitables
-                            let $label := "#"||$pos||" "||name($oidata)
-                            let $anchor := "table_"||$pos||"_"||$uuid
-                            return <li><a href="#{$anchor}">{$label}</a></li>
-                        }
+                        <li><a href="#oifits{$uuid}"><b>{$filename}</b></a></li>
+                    </ul>
+                    <p class="navbar-text navbar-right">OIFits {$oifits/version}</p>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li><a href="#granules{$uuid}">Granules ({count($xml//metadata//target)})</a></li>
+                        <li ><a href="#report{$uuid}">Check report&#160;{if($chech-report-severity) then <i class="glyphicon glyphicon-warning-sign"/> else ()}</a></li>
+                        { if ($prim-hdu-keywords) then <li><a href="#prim-hdu-keywords-{$uuid}">Primary HDU keywords ({count($prim-hdu-keywords)})</a></li> else () }
+                        <li class="dropdown">
+                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">OI_Tables ({count($oitables)}) <b class="caret"></b></a>
+                            <ul class="dropdown-menu">
+                             {
+                             for $oidata at $pos in $oitables
+                                let $label := "#"||$pos||" "||name($oidata)
+                                let $anchor := "table_"||$pos||"_"||$uuid
+                                return <li><a href="#{$anchor}">{$label}</a></li>
+                            }
                       </ul>
                     </li>
-                  <li></li>
+                  <li>&#160;</li>
                 </ul>
                 </nav>
                 <div>
@@ -93,12 +101,11 @@ declare function app:show-html($xml as node()*) {
                           <li><a href="#oifits{$uuid}">OIFits</a></li>
                           <li class="active">Primary HDU keywords</li>
                         </ol>,
-                        <p> 
-                            <button data-toggle="modal" data-target="#hdu-keywords-{$uuid}">Display primary HDU keywords ({count($prim-hdu-keywords)}) </button>
-                            
+                        <div>
+                            <button data-toggle="modal" data-target="#hdu-keywords-{$uuid}">Display primary HDU keywords ({count($prim-hdu-keywords)})</button>
                             <!-- Modal view for primary HDU keywords -->
                             <div class="modal fade" id="hdu-keywords-{$uuid}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
-                              <div class="modal-dialog">
+                              <div class="col-xs-11 center-block"> <!-- would prefer something like modal-dialog modal-10 but... -->
                                 <div class="modal-content">
                                   <div class="modal-header">
                                     <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">X</span><span class="sr-only">Close</span></button>
@@ -118,7 +125,7 @@ declare function app:show-html($xml as node()*) {
                                 </div>
                               </div>
                             </div>                            
-                        </p>)
+                        </div>)
                         else <p>No primary HDU keywords</p>
                         }
                         
@@ -183,12 +190,12 @@ declare function app:show-html($xml as node()*) {
 declare function app:validate() {  
     (: read input params :)
     let $urls := request:get-parameter("urls", ())
-    let $url-list := for $u in $urls return tokenize($u, "[,\s]+")
+    let $url-list := distinct-values( for $u in $urls return tokenize($u, "[,\s]+") )
     let $upload-filename := request:get-uploaded-file-name("userfile")
     
     (: build one record per oifits source:)
-    let $ret1 := for $u in $url-list return <record><url>{$u}</url>{jmmc-oiexplorer:to-xml($u)}</record>
-    let $ret2 := if($upload-filename) then <record><filename>{$upload-filename}</filename>{jmmc-oiexplorer:to-xml(request:get-uploaded-file-data("userfile"))}</record> else ()
+    let $ret1 := for $u in $url-list return <record><url>{$u}</url>{ try { jmmc-oiexplorer:to-xml($u) } catch * { <error>{$err:description}</error> } }</record>
+    let $ret2 := if($upload-filename) then <record><filename>{$upload-filename}</filename>{ try { jmmc-oiexplorer:to-xml(request:get-uploaded-file-data("userfile"))  } catch * {<error>{$err:description}</error> }}</record> else ()
     let $ret := ($ret1,$ret2)
     
     (: transform each record into html :)
@@ -197,8 +204,17 @@ declare function app:validate() {
     (: and summarize the whole results :)
     let $res := <div >
         {
+            for $e in $ret[error] 
+                let $filename := tokenize($e/url||$e/filename,"/")[last()]
+            return
+                <div class="alert alert-danger alert-dismissable fade in">
+                    <i class="icon icon-times-circle icon-lg"></i>
+                    <strong>{$filename}</strong> : {data($e/error)}
+                </div>
+                
+            ,
             if (count($records//nav)>1) then
-                <div class="col-md-12" id="top">
+                <div class="col-md-12">
                     <ul class="nav">
                         <li>Targets
                             <ul>
