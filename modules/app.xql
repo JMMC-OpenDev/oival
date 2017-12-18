@@ -25,6 +25,41 @@ declare function app:format-check-report($report as xs:string) as node()*{
   return <ul class="list-unstyled">{$els}</ul>
 };
 
+declare function app:format-failures-report($failures as node()?, $rules as node()?) as node()*{
+    let $profile := $failures/profile
+    
+    let $res := for $f-by-hdus in $failures//failure group by $hdu := $f-by-hdus/hdu
+                    return
+                        (
+                            <tr><th>{$hdu}</th><th></th></tr>,
+                            for $f in $f-by-hdus
+                                let $rule := $rules/rule[name=$f/rule]
+                                let $label-level := switch ($f/severity) 
+                                    case "SEVERE" return "danger"
+                                    case "WARNING" return "warning"
+                                    case "INFO" return "info"
+                                    default return "default"
+                                
+                                let $data := if ($f/data) then
+                                        for $d in $f/data
+                                            return <tr><td>{$d/row/data()}</td><td>{$d/value/data()}</td></tr>
+                                        else ()
+                                
+                                return (<tr><td><span class="label label-{$label-level}">{$f/member}</span> (rule {$f/rule})</td><td>{$rule/description/data()}</td></tr>,$data)
+                                
+                        )
+    return 
+        <div>
+            <table class="table table-bordered table-condensed">
+            {
+               $res
+            }
+            </table>
+            We may use something like <a href="https://codepen.io/smargh/pen/WvWGdM">https://codepen.io/smargh/pen/WvWGdM</a> ?
+        </div>
+};
+
+
 (: 
    TODO add xqldoc, and split code in multiple functions
  :)
@@ -36,6 +71,10 @@ declare function app:show-html($xml as node()*) {
         let $prim-hdu-keywords := $oifits/keywords/keyword
         let $check-report := $xml//checkReport
         let $chech-report-severity := if(matches($check-report, "SEVERE")) then "danger" else if(matches($check-report, "WARNING")) then "warning" else ()
+        let $failures := $xml//failures
+        let $rules := $xml//rules
+
+        
         
         return
             <div class="panel panel-default" id="oifits{$uuid}">
@@ -48,22 +87,19 @@ declare function app:show-html($xml as node()*) {
                 <!-- Nav bar -->
                 <nav  class="navbar navbar-default navbar-static" role="navigation">
                     <ul class="nav navbar-nav">
-                        <li><a href="#oifits{$uuid}"><b>{$filename}</b></a></li>
-                    </ul>
-                    <p class="navbar-text navbar-right">OIFits {$oifits/version}</p>
-                    <ul class="nav navbar-nav navbar-right">
-                        <li><a href="#granules{$uuid}">Granules ({count($xml//metadata//target)})</a></li>
-                        <li ><a href="#report{$uuid}">Check report&#160;{if($chech-report-severity) then <i class="glyphicon glyphicon-warning-sign"/> else ()}</a></li>
-                        { if ($prim-hdu-keywords) then <li><a href="#prim-hdu-keywords-{$uuid}">Primary HDU keywords ({count($prim-hdu-keywords)})</a></li> else () }
-                        <li class="dropdown">
-                            <a href="#" class="dropdown-toggle" data-toggle="dropdown">OI_Tables ({count($oitables)}) <b class="caret"></b></a>
-                            <ul class="dropdown-menu">
-                             {
-                             for $oidata at $pos in $oitables
-                                let $label := "#"||$pos||" "||name($oidata)
-                                let $anchor := "table_"||$pos||"_"||$uuid
-                                return <li><a href="#{$anchor}">{$label}</a></li>
-                            }
+                    <li><p class="navbar-text"><b>{$xml/url||$xml/filename}</b></p></li>
+                    <li><a href="#granules{$uuid}">Granules ({count($xml//metadata//target)})</a></li>
+                    { if ($prim-hdu-keywords) then <li><a href="#prim-hdu-keywords-{$uuid}">Primary HDU keywords ({count($prim-hdu-keywords)})</a></li> else () }
+                    <li ><a href="#report{$uuid}">Check report&#160;{if($chech-report-severity) then <i class="glyphicon glyphicon-warning-sign"/> else ()}</a></li>
+                    <li class="dropdown">
+                        <a href="#" class="dropdown-toggle" data-toggle="dropdown">OI_Tables ({count($oitables)}) <b class="caret"></b></a>
+                        <ul class="dropdown-menu">
+                         {
+                         for $oidata at $pos in $oitables
+                            let $label := "#"||$pos||" "||name($oidata)
+                            let $anchor := "table_"||$pos||"_"||$uuid
+                            return <li><a href="#{$anchor}">{$label}</a></li>
+                        }
                       </ul>
                     </li>
                   <li>&#160;</li>
@@ -94,6 +130,8 @@ declare function app:show-html($xml as node()*) {
                           <li class="active">Check report</li>
                         </ol>
                         {app:format-check-report($check-report)}
+                        <hr/>
+                        {app:format-failures-report($failures, $rules)}
                         
                         { if ( $prim-hdu-keywords ) then
                         (<ol id="prim-hdu-keywords-{$uuid}" class="breadcrumb">
@@ -101,7 +139,7 @@ declare function app:show-html($xml as node()*) {
                           <li><a href="#oifits{$uuid}">OIFits</a></li>
                           <li class="active">Primary HDU keywords</li>
                         </ol>,
-                        <div>
+                        <p> 
                             <button data-toggle="modal" data-target="#hdu-keywords-{$uuid}">Display primary HDU keywords ({count($prim-hdu-keywords)})</button>
                             <!-- Modal view for primary HDU keywords -->
                             <div class="modal fade" id="hdu-keywords-{$uuid}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -125,7 +163,7 @@ declare function app:show-html($xml as node()*) {
                                 </div>
                               </div>
                             </div>                            
-                        </div>)
+                        </p>)
                         else <p>No primary HDU keywords</p>
                         }
                         
