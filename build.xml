@@ -5,11 +5,17 @@
     <property name="project.app" value="${package(abbrev)}"/>
     <property name="build.dir" value="build"/>
 
-    <target name="xar">
+    <target name="xar" depends="copyFailures">
         <mkdir dir="${build.dir}"/>
         <delete dir="${build.dir}" includes="*.xar"/>
 
         <zip basedir="." destfile="${build.dir}/${project.app}-${project.version}.xar"
 	     excludes="${build.dir}/**,.exist/**,target/**,build.xml,pom.xml"/>
     </target>
+
+  <target name="copyFailures">
+        <copy file="../build/deps/oiTools/oitools/rules/Failures.xml" todir="." verbose="true">
+        </copy>
+    </target>
+
 </project>

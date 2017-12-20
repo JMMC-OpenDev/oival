@@ -16,6 +16,11 @@ import module namespace jmmc-oiexplorer="http://exist.jmmc.fr/jmmc-resources/oie
 };
 :)
 
+declare function app:show-failures($node as node(), $model as map(*)) {
+    let $failures := doc($config:app-root||"/Failures.xml")
+    return app:format-failures-report($failures, ())
+};
+
 declare function app:format-check-report($report as xs:string) as node()*{
   let $lines := tokenize($report, "&#10;")
   let $styles := <styles><s><t>INFO</t><c>text-info</c></s><s><t>WARNING</t><c>text-warning</c></s><s><t>SEVERE</t><c>text-danger</c></s></styles>
@@ -39,13 +44,15 @@ declare function app:format-failures-report($failures as node()?, $rules as node
                                     case "WARNING" return "warning"
                                     case "INFO" return "info"
                                     default return "default"
+                                let $rule-desc := data($rule/description)
                                 
                                 let $data := if ($f/data) then
                                         for $d in $f/data
-                                            return <tr><td>{$d/row/data()}</td><td>{$d/value/data()}</td></tr>
+                                            
+                                            return <tr><td>{data($d/row)}{data($d/value)}</td><td>{data($d/message)}</td></tr>
                                         else ()
                                 
-                                return (<tr><td><span class="label label-{$label-level}">{$f/member}</span> (rule {$f/rule})</td><td>{$rule/description/data()}</td></tr>,$data)
+                                return (<tr><td><span class="label label-{$label-level}">{$f/member}</span> (rule {$f/rule})</td><td>{$rule-desc}</td></tr>,$data)
                                 
                         )
     return 
@@ -237,9 +244,9 @@ declare function app:validate() {
     let $ret := ($ret1,$ret2)
     
     (: transform each record into html :)
-    let $records := <records>{ for $e in $ret return app:show-html($e)}</records>
+    let $records := <records>{for $e in $ret return app:show-html($e)}</records>
     
-    (: and summarize the whole results :)
+    (: and summarize the whole results after a display of the errors :)
     let $res := <div >
         {
             for $e in $ret[error] 
