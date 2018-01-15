@@ -18,7 +18,8 @@ import module namespace jmmc-oiexplorer="http://exist.jmmc.fr/jmmc-resources/oie
 
 declare function app:show-failures($node as node(), $model as map(*)) {
     let $failures := doc($config:app-root||"/Failures.xml")
-    return app:format-failures-report($failures, ())
+    let $rules :=doc($config:app-root||"/DataModelV2.xml")
+    return app:format-failures-report($failures, $rules)
 };
 
 declare function app:format-check-report($report as xs:string) as node()*{
@@ -33,34 +34,62 @@ declare function app:format-check-report($report as xs:string) as node()*{
 declare function app:format-failures-report($failures as node()?, $rules as node()?) as node()*{
     let $profile := $failures/profile
     
-    let $res := for $f-by-hdus in $failures//failure group by $hdu := $f-by-hdus/hdu
+    let $res := for $f-by-hdus in $failures//failure group by $hdu := $f-by-hdus/extName||"#"||$f-by-hdus/extNb
                     return
                         (
-                            <tr><th>{$hdu}</th><th></th></tr>,
-                            for $f in $f-by-hdus
-                                let $rule := $rules/rule[name=$f/rule]
+                            for $f at $pos in $f-by-hdus
                                 let $label-level := switch ($f/severity) 
                                     case "SEVERE" return "danger"
                                     case "WARNING" return "warning"
                                     case "INFO" return "info"
                                     default return "default"
-                                let $rule-desc := data($rule/description)
+                                let $rule-desc := data($rules//rule[name=$f/rule]/description)
                                 
-                                let $data := if ($f/data) then
-                                        for $d in $f/data
-                                            
-                                            return <tr><td>{data($d/row)}{data($d/value)}</td><td>{data($d/message)}</td></tr>
-                                        else ()
+                                let $data-nb := if($f/data) then count($f/data) else "1"
                                 
-                                return (<tr><td><span class="label label-{$label-level}">{$f/member}</span> (rule {$f/rule})</td><td>{$rule-desc}</td></tr>,$data)
+                                let $failure-desc := (
+                                    <td rowspan="{$data-nb}"><a href="https://svn.jmmc.fr/jmmc-sw/oiTools/trunk/oitools/rules/DataModelV2_output.html#RULE_{$f/rule}" target="_blank"><span class="label label-{$label-level}">{$f/rule}</span></a><br/>{$rule-desc} </td>,
+                                    <td rowspan="{$data-nb}">{data($hdu)}</td>,
+                                    <td rowspan="{$data-nb}">{$f/member}</td>
+                                )
+                                
+                                return 
+                                    if ($f/data)
+                                    then
+                                        for $d at $pos in $f/data return 
+                                            <tr>
+                                                {if ($pos=1) then $failure-desc else () }
+                                                <td>{data($d/message)}</td>
+                                                <td>{data($d/row)}</td>
+                                                <td>{data($d/col)}</td>
+                                                <td>{data($d/value)}</td>
+                                                <td><ul>{for $e in tokenize($d/expected,"\|") return <li>{$e}</li>}</ul></td>
+                                                <td>{data($d/limit)}</td>
+                                                <td>{data($d/detail)}</td>
+                                            </tr>
+                                    else 
+                                        <tr>{($failure-desc)}<td colspan="7">{data($f/message)}</td></tr>
                                 
                         )
     return 
         <div>
             <table class="table table-bordered table-condensed">
+            <thead>
+            <tr>
+                <th rowspan="2">Rule </th>
+                <th rowspan="2">HDU </th>
+                <th rowspan="2">Member </th>
+                <th colspan="7">Data</th>
+            </tr>
+            <tr>
+                <th>Message </th><th>Row </th><th>Col </th><th>Value </th><th>Expected </th><th>Limit </th><th>Detail </th>
+            </tr>
+            </thead>
+            <tbody>
             {
                $res
             }
+            </tbody>
             </table>
             We may use something like <a href="https://codepen.io/smargh/pen/WvWGdM">https://codepen.io/smargh/pen/WvWGdM</a> ?
         </div>

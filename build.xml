@@ -15,6 +15,7 @@
 
   <target name="copyFailures">
         <copy file="../build/deps/oiTools/oitools/rules/Failures.xml" todir="." verbose="true">
+          <copy file="../build/deps/oiTools/oitools/rules/DataModelV2.xml" todir="." verbose="true">
         </copy>
     </target>
 
