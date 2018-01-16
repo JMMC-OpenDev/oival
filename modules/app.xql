@@ -9,12 +9,9 @@ import module namespace jmmc-about="http://exist.jmmc.fr/jmmc-resources/about" a
 
 import module namespace jmmc-oiexplorer="http://exist.jmmc.fr/jmmc-resources/oiexplorer" at "/db/apps/jmmc-resources/content/jmmc-oiexplorer.xql";
 
-(: 
- to uncomment when validate.html will be ready
- declare function app:validate($node as node(), $model as map(*), $urls as xs:string*) {
+declare function app:validate($node as node(), $model as map(*), $urls as xs:string*) {
     (app:validate())
 };
-:)
 
 declare function app:show-failures($node as node(), $model as map(*)) {
     let $failures := doc($config:app-root||"/Failures.xml")
@@ -32,12 +29,20 @@ declare function app:format-check-report($report as xs:string) as node()*{
 };
 
 declare function app:format-failures-report($failures as node()?, $rules as node()?) as node()*{
-    let $profile := $failures/profile
+(:    let $profile := $failures/profile:)
     
-    let $res := for $f-by-hdus in $failures//failure group by $hdu := $f-by-hdus/extName||"#"||$f-by-hdus/extNb
-                    return
-                        (
-                            for $f at $pos in $f-by-hdus
+(: with grouping :)    
+(:    let $res := for $f-by-hdus in $failures//failure group by $hdu := $f-by-hdus/extName||"#"||$f-by-hdus/extNb:)
+(:                    return:)
+(:                        ( :)
+(:                            for $f at $pos in $f-by-hdus :)
+(: without grouping :) 
+        let $res :=        (    for $f at $pos in $failures//failure
+                                let $hdu := $f/extName||"#"||$f/extNb    
+        
+ 
+
+
                                 let $label-level := switch ($f/severity) 
                                     case "SEVERE" return "danger"
                                     case "WARNING" return "warning"
@@ -48,9 +53,9 @@ declare function app:format-failures-report($failures as node()?, $rules as node
                                 let $data-nb := if($f/data) then count($f/data) else "1"
                                 
                                 let $failure-desc := (
-                                    <td rowspan="{$data-nb}"><a href="https://svn.jmmc.fr/jmmc-sw/oiTools/trunk/oitools/rules/DataModelV2_output.html#RULE_{$f/rule}" target="_blank"><span class="label label-{$label-level}">{$f/rule}</span></a><br/>{$rule-desc} </td>,
+                                    <td rowspan="{$data-nb}"><a href="https://svn.jmmc.fr/jmmc-sw/oiTools/trunk/oitools/rules/DataModelV2_output.html#RULE_{$f/rule}" target="_blank"><span class="label label-{$label-level}">{data($f/rule)}</span></a><br/>{$rule-desc} </td>,
                                     <td rowspan="{$data-nb}">{data($hdu)}</td>,
-                                    <td rowspan="{$data-nb}">{$f/member}</td>
+                                    <td rowspan="{$data-nb}">{data($f/member)}</td>
                                 )
                                 
                                 return 
@@ -59,11 +64,12 @@ declare function app:format-failures-report($failures as node()?, $rules as node
                                         for $d at $pos in $f/data return 
                                             <tr>
                                                 {if ($pos=1) then $failure-desc else () }
-                                                <td>{data($d/message)}</td>
+                                                <td>{replace($d/message,"\|", ", ")}</td>
                                                 <td>{data($d/row)}</td>
                                                 <td>{data($d/col)}</td>
                                                 <td>{data($d/value)}</td>
-                                                <td><ul>{for $e in tokenize($d/expected,"\|") return <li>{$e}</li>}</ul></td>
+                                                <!-- <td><ul>{for $e in tokenize($d/expected,"\|") return <li>{$e}</li>}</ul></td>-->
+                                                <td>{replace($d/expected,"\|", ", ")}</td>
                                                 <td>{data($d/limit)}</td>
                                                 <td>{data($d/detail)}</td>
                                             </tr>
@@ -72,26 +78,25 @@ declare function app:format-failures-report($failures as node()?, $rules as node
                                 
                         )
     return 
-        <div>
-            <table class="table table-bordered table-condensed">
-            <thead>
-            <tr>
-                <th rowspan="2">Rule </th>
-                <th rowspan="2">HDU </th>
-                <th rowspan="2">Member </th>
-                <th colspan="7">Data</th>
-            </tr>
-            <tr>
-                <th>Message </th><th>Row </th><th>Col </th><th>Value </th><th>Expected </th><th>Limit </th><th>Detail </th>
-            </tr>
-            </thead>
-            <tbody>
-            {
-               $res
-            }
-            </tbody>
+        <div class="table-responsive">
+            <table class="table table-bordered table-condensed table-hover">
+                <thead>
+                    <tr>
+                        <th rowspan="2">Rule </th>
+                        <th rowspan="2">HDU </th>
+                        <th rowspan="2">Member </th>
+                        <th colspan="7">Data</th>
+                    </tr>
+                    <tr>
+                        <th>Message </th><th>Row </th><th>Col </th><th>Value </th><th>Expected </th><th>Limit </th><th>Detail </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {
+                       $res
+                    }
+                </tbody>
             </table>
-            We may use something like <a href="https://codepen.io/smargh/pen/WvWGdM">https://codepen.io/smargh/pen/WvWGdM</a> ?
         </div>
 };
 
