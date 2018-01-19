@@ -19,13 +19,14 @@ declare function app:show-failures($node as node(), $model as map(*)) {
     return app:format-failures-report($failures, $rules)
 };
 
-declare function app:format-check-report($report as xs:string) as node()*{
-  let $lines := tokenize($report, "&#10;")
+declare function app:format-validation($validation as node()) as node()*{
   let $styles := <styles><s><t>INFO</t><c>text-info</c></s><s><t>WARNING</t><c>text-warning</c></s><s><t>SEVERE</t><c>text-danger</c></s></styles>
-  let $els := for $line in $lines  
-                    let $class:=for $t in $styles//t return if(starts-with(normalize-space($line), $t)) then data($styles//s[t=$t]/c) else () 
-                    return <li class="{$class}">{$line}</li>
-  return <ul class="list-unstyled">{$els}</ul>
+  let $els := for $m in $validation//message  
+                    let $class:= data($styles//s[t=$m/@level]/c)
+                    return <li class="{$class}">{data($m)}</li>
+(:  let $counters := <li>{$validation/@warn ||" warnings, "|| $validation/@error ||" errors"}</li> more efficient but requires a small bugfix:)
+  let $counters := <li>{count($validation/message[@level="WARNING"]) ||" warnings, "|| count($validation/message[@level="SEVERE"]) ||" errors"}</li>
+  return <ul class="list-unstyled">{$els, $counters}</ul>
 };
 
 declare function app:format-failures-report($failures as node()?, $rules as node()?) as node()*{
@@ -38,10 +39,7 @@ declare function app:format-failures-report($failures as node()?, $rules as node
 (:                            for $f at $pos in $f-by-hdus :)
 (: without grouping :) 
         let $res :=        (    for $f at $pos in $failures//failure
-                                let $hdu := $f/extName||"#"||$f/extNb    
-        
- 
-
+                                let $hdu := $f/extName||"#"||$f/extNb
 
                                 let $label-level := switch ($f/severity) 
                                     case "SEVERE" return "danger"
@@ -110,12 +108,10 @@ declare function app:show-html($xml as node()*) {
         let $filename := tokenize($xml/url||$xml/filename,"/")[last()]
         let $oitables := $xml//oifits/*[starts-with(name(.),"OI_")]
         let $prim-hdu-keywords := $oifits/keywords/keyword
-        let $check-report := $xml//checkReport
-        let $chech-report-severity := if(matches($check-report, "SEVERE")) then "danger" else if(matches($check-report, "WARNING")) then "warning" else ()
+        let $validation := $xml//validation
+        let $chech-report-severity := if($validation/message[@level="SEVERE"]) then "danger" else if($validation/message[@level="WARNING"]) then "warning" else ()
         let $failures := $xml//failures
         let $rules := $xml//rules
-
-        
         
         return
             <div class="panel panel-default" id="oifits{$uuid}">
@@ -170,10 +166,20 @@ declare function app:show-html($xml as node()*) {
                           <li><a href="#oifits{$uuid}">OIFits</a></li>
                           <li class="active">Check report</li>
                         </ol>
-                        {app:format-check-report($check-report)}
+                        {app:format-validation($validation)}
                         <hr/>
-                        {app:format-failures-report($failures, $rules)}
-                        
+                         <div class="panel-group">
+                          <div class="panel panel-default">
+                            <div class="panel-heading">
+                              <h4 class="panel-title">
+                                <a data-toggle="collapse" href="#collapse1">Details on failures... </a>
+                              </h4>
+                            </div>
+                            <div id="collapse1" class="panel-collapse collapse">
+                              <div class="panel-body">{app:format-failures-report($failures, $rules)}</div>
+                            </div>
+                          </div>
+                        </div>
                         { if ( $prim-hdu-keywords ) then
                         (<ol id="prim-hdu-keywords-{$uuid}" class="breadcrumb">
                           <li><a href="#top">TOP^</a></li>
