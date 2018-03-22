@@ -19,14 +19,13 @@ declare function app:show-failures($node as node(), $model as map(*)) {
     return app:format-failures-report($failures, $rules)
 };
 
-declare function app:format-validation($validation as node()) as node()*{
+declare function app:format-check-report($report as xs:string) as node()*{
+  let $lines := tokenize($report, "&#10;")
   let $styles := <styles><s><t>INFO</t><c>text-info</c></s><s><t>WARNING</t><c>text-warning</c></s><s><t>SEVERE</t><c>text-danger</c></s></styles>
-  let $els := for $m in $validation//message  
-                    let $class:= data($styles//s[t=$m/@level]/c)
-                    return <li class="{$class}">{data($m)}</li>
-(:  let $counters := <li>{$validation/@warn ||" warnings, "|| $validation/@error ||" errors"}</li> more efficient but requires a small bugfix:)
-  let $counters := <li>{count($validation/message[@level="WARNING"]) ||" warnings, "|| count($validation/message[@level="SEVERE"]) ||" errors"}</li>
-  return <ul class="list-unstyled">{$els, $counters}</ul>
+  let $els := for $line in $lines  
+                    let $class:=for $t in $styles//t return if(starts-with(normalize-space($line), $t)) then data($styles//s[t=$t]/c) else () 
+                    return <li class="{$class}">{$line}</li>
+  return <ul class="list-unstyled">{$els}</ul>
 };
 
 declare function app:format-failures-report($failures as node()?, $rules as node()?) as node()*{
@@ -77,6 +76,17 @@ declare function app:format-failures-report($failures as node()?, $rules as node
                         )
     return 
         <div class="table-responsive">
+            <p> Severity legend:
+                {
+                for $severity in distinct-values($failures//failure/severity)
+                                let $label-level := switch ($severity) 
+                                    case "SEVERE" return "danger"
+                                    case "WARNING" return "warning"
+                                    case "INFO" return "info"
+                                    default return "default"
+                                    return <span class="label label-{$label-level}">{$severity}</span>
+                }
+            </p>
             <table class="table table-bordered table-condensed table-hover">
                 <thead>
                     <tr>
@@ -108,10 +118,12 @@ declare function app:show-html($xml as node()*) {
         let $filename := tokenize($xml/url||$xml/filename,"/")[last()]
         let $oitables := $xml//oifits/*[starts-with(name(.),"OI_")]
         let $prim-hdu-keywords := $oifits/keywords/keyword
-        let $validation := $xml//validation
-        let $chech-report-severity := if($validation/message[@level="SEVERE"]) then "danger" else if($validation/message[@level="WARNING"]) then "warning" else ()
+        let $check-report := $xml//checkReport
+        let $chech-report-severity := if(matches($check-report, "SEVERE")) then "danger" else if(matches($check-report, "WARNING")) then "warning" else ()
         let $failures := $xml//failures
         let $rules := $xml//rules
+
+        
         
         return
             <div class="panel panel-default" id="oifits{$uuid}">
@@ -166,7 +178,7 @@ declare function app:show-html($xml as node()*) {
                           <li><a href="#oifits{$uuid}">OIFits</a></li>
                           <li class="active">Check report</li>
                         </ol>
-                        {app:format-validation($validation)}
+                        {app:format-check-report($check-report)}
                         <hr/>
                          <div class="panel-group">
                           <div class="panel panel-default">

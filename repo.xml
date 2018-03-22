@@ -13,6 +13,13 @@
     <note/>
     <changelog>
         <!-- We start from 2.0 to follow previous oival versions ( php + system call ) -->
+        <change xmlns="" version="2.5">
+            <h3>Mar 2018</h3>
+            <ul>
+              <li>Use new version of Oitools that enhance error report</li>
+              <li>Add severity colors in the failures report</li>
+            </ul>
+        </change>
         <change xmlns="" version="2.4">
             <h3>Oct 2017</h3>
             <ul>
@@ -22,7 +29,7 @@
         <change xmlns="" version="2.3">
             <h3>Apr 2016</h3>
             <ul>
-              <li>throw a warning message if observation dates of a table seem out of bound</li>
+              <li>Throw a warning message if observation dates of a table seem out of bound</li>
             </ul>
         </change>
         <change xmlns="" version="2.2">
