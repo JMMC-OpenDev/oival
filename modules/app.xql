@@ -117,7 +117,7 @@ declare function app:show-html($xml as node()*) {
         let $uuid := util:uuid()
         let $filename := tokenize($xml/url||$xml/filename,"/")[last()]
         let $oitables := $xml//oifits/*[starts-with(name(.),"OI_")]
-        let $prim-hdu-keywords := $oifits/keywords/keyword
+        let $prim-hdu-keywords := $oifits/hdu/keywords/keyword
         let $check-report := $xml//checkReport
         let $chech-report-severity := if(matches($check-report, "SEVERE")) then "danger" else if(matches($check-report, "WARNING")) then "warning" else ()
         let $failures := $xml//failures
