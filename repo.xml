@@ -19,6 +19,7 @@
               <li>Shorten long table data display</li>
               <li>Dislay OIFits version</li>
               <li>Fix bug to expand failure details for multiples files</li>
+              <li>Display a check report summary at the end of the page</li>
             </ul>
         </change>
         <change xmlns="" version="2.6">

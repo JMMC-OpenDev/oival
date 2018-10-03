@@ -126,7 +126,7 @@ declare function app:show-html($xml as node()*) {
         
         
         return
-            <div class="panel panel-default" id="oifits{$uuid}">
+            <div class="panel panel-default" data-report="" id="oifits{$uuid}">
                 <div class="panel-heading">
                     <h3 class="panel-title">
                         <b>{$xml/url||$xml/filename}</b>
@@ -136,7 +136,7 @@ declare function app:show-html($xml as node()*) {
                 <!-- Nav bar -->
                 <nav  class="navbar navbar-default navbar-static" role="navigation">
                     <ul class="nav navbar-nav">
-                    <li><p class="navbar-text"><b>{$xml/url||$xml/filename}</b></p></li>
+                    <li><p class="navbar-text" data-filename=""><b>{$xml/url||$xml/filename}</b></p></li><!-- data-filename put for futur retrieval -->
                     <li><a href="#granules{$uuid}">Granules ({count($xml//metadata//target)})</a></li>
                     { if ($prim-hdu-keywords) then <li><a href="#prim-hdu-keywords-{$uuid}">Primary HDU keywords ({count($prim-hdu-keywords)})</a></li> else () }
                     <li ><a href="#report{$uuid}">Check report&#160;{if($chech-report-severity) then <i class="glyphicon glyphicon-warning-sign"/> else ()}</a></li>
@@ -181,7 +181,9 @@ declare function app:show-html($xml as node()*) {
                         </ol>
                         {app:format-check-report($check-report)}
                         <hr/>
-                         <div class="panel-group">
+                        
+                        { if (empty($failures//failure)) then () else
+                        <div class="panel-group">
                           <div class="panel panel-default">
                             <div class="panel-heading">
                               <h4 class="panel-title">
@@ -189,10 +191,12 @@ declare function app:show-html($xml as node()*) {
                               </h4>
                             </div>
                             <div id="faildetails{$uuid}" class="panel-collapse collapse">
-                              <div class="panel-body">{app:format-failures-report($failures, $rules)}</div>
+                              <div class="panel-body"  data-faildetails=""><!-- data-faildetails put for future retrieval -->{app:format-failures-report($failures, $rules)}</div>
                             </div>
                           </div>
                         </div>
+                        }
+                        
                         { if ( $prim-hdu-keywords ) then
                         (<ol id="prim-hdu-keywords-{$uuid}" class="breadcrumb">
                           <li><a href="#top">TOP^</a></li>
@@ -344,6 +348,16 @@ declare function app:validate() {
                 ()
         }
         <div class="col-md-12">{ $records/div }</div>
+        { if (exists($records//div[@data-faildetails])) then
+            <div class="col-md-12">
+                <h3>CheckReport summary</h3> 
+                {
+                    for $record in $records//div[@data-report][.//div[@data-faildetails]]
+                    return 
+                        (<h4>{data($record//p[@data-filename])}</h4>, $record//div[@data-faildetails])
+                }
+            </div>
+        else () }
     </div>
     
     return $res
