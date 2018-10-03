@@ -151,6 +151,7 @@ declare function app:show-html($xml as node()*) {
                         }
                       </ul>
                     </li>
+                    <li><p class="navbar-text">OIFITS V{substring($oifits/version,9)}</p></li>
                   <li>&#160;</li>
                 </ul>
                 </nav>
@@ -184,10 +185,10 @@ declare function app:show-html($xml as node()*) {
                           <div class="panel panel-default">
                             <div class="panel-heading">
                               <h4 class="panel-title">
-                                <a data-toggle="collapse" href="#collapse1">Details on failures... </a>
+                                <a data-toggle="collapse" href="#faildetails{$uuid}">Details on failures... </a>
                               </h4>
                             </div>
-                            <div id="collapse1" class="panel-collapse collapse">
+                            <div id="faildetails{$uuid}" class="panel-collapse collapse">
                               <div class="panel-body">{app:format-failures-report($failures, $rules)}</div>
                             </div>
                           </div>
@@ -270,7 +271,18 @@ declare function app:show-html($xml as node()*) {
                                                 <th><a title="{$c/description}">{data($c/name)} {$unit}</a></th>
                                             }</tr>
                                             {
-                                               $oidata/table/tr[td]
+                                                let $trs := $oidata/table/tr[td]
+                                                let $count := count($trs)
+                                                let $cut := 5
+                                                return 
+                                                    if ($count<=2*$cut) then 
+                                                        $trs
+                                                    else
+                                                        let $first-trs := subsequence($trs, 1, $cut)
+                                                        let $last-trs := subsequence($trs, $count - $cut, $cut)
+                                                        let $dots := <tr>{for $td in $trs[1]/td return <td>...</td>}</tr>
+                                                        return
+                                                            ($first-trs, $dots, $last-trs)
                                             }
                                         </table>)
                                     else ()
