@@ -9,6 +9,9 @@ import module namespace jmmc-about="http://exist.jmmc.fr/jmmc-resources/about" a
 
 import module namespace jmmc-oiexplorer="http://exist.jmmc.fr/jmmc-resources/oiexplorer" at "/db/apps/jmmc-resources/content/jmmc-oiexplorer.xql";
 
+import module namespace jmmc-vizier="http://exist.jmmc.fr/jmmc-resources/vizier" at "/db/apps/jmmc-resources/content/jmmc-vizier.xql";
+ (: TODO remove at in  previous import lines :)
+
 declare function app:validate($node as node(), $model as map(*), $urls as xs:string*) {
     (app:validate())
 };
@@ -305,11 +308,21 @@ declare function app:validate() {
     let $urls := request:get-parameter("urls", ())
     let $url-list := distinct-values( for $u in $urls return tokenize($u, "[,\s]+") )
     let $upload-filename := request:get-uploaded-file-name("userfile")
+    let $cat := request:get-parameter("cat", ())
     
     (: build one record per oifits source:)
     let $ret1 := for $u in $url-list return <record><url>{$u}</url>{ try { jmmc-oiexplorer:to-xml($u) } catch * { <error>{$err:description}</error> } }</record>
     let $ret2 := if($upload-filename) then <record><filename>{$upload-filename}</filename>{ try { jmmc-oiexplorer:to-xml(request:get-uploaded-file-data("userfile"))  } catch * {<error>{$err:description}</error> }}</record> else ()
-    let $ret := ($ret1,$ret2)
+    
+    let $ret3 := if($cat) then 
+        try{
+            let $urls := jmmc-vizier:catalog-fits($cat)
+            for $url in $urls return <record><cat>{$cat}</cat><url>{$url}</url>{ try { jmmc-oiexplorer:to-xml($url) } catch * { <error>CAT {$cat} {$err:description}</error> } }</record> 
+        } catch * {
+            <record><cat>{$cat}</cat><error>VizieR catalog {$cat} not found&#10;<br/> {$err:description}</error> </record>
+        }
+        else ()
+    let $ret := ($ret1,$ret2,$ret3)
     
     (: transform each record into html :)
     let $records := <records>{for $e in $ret return app:show-html($e)}</records>
@@ -318,7 +331,7 @@ declare function app:validate() {
     let $res := <div >
         {
             for $e in $ret[error] 
-                let $filename := tokenize($e/url||$e/filename,"/")[last()]
+                let $filename := tokenize($e/url||$e/filename,"/")[last()] || $e/cat
             return
                 <div class="alert alert-danger alert-dismissable fade in">
                     <i class="icon icon-times-circle icon-lg"></i>

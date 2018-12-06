@@ -12,19 +12,26 @@
         <form class="form-horizontal" role="form" enctype="multipart/form-data" action="./validate.xql" method="post">
             <div class="row">
                 <div class="form-group col-md-3">
+                
                     <label for="userfile">Upload an OIFits file :</label>
                     <input type="file" name="userfile" id="userfile" size="65"/>
-                    <p class="help-block">'gzip' compressed files can be used to minimize upload times. <br/>No data is stored on server side.</p>
+                    <br/>
+                    <label for="cat">Use CDS catalog ID :</label>
+                    <input type="text" name="cat" id="cat" size="17" placeholder="Paste cat name (J/....)"/>
+                </div>
+                <div class="col-md-1">
                 </div>
                 <div class="form-group col-md-8">
                     <label for="urls"> or enter remote OIFits url(s) :</label>
-                    <textarea class="form-control" rows="3" name="urls" id="urls"/>
+                    <textarea class="form-control" rows="7" name="urls" id="urls"/>
                     <!--<p class="help-block"></p>-->
                 </div>
             </div>
-            <div class="form-group">
-                <button type="submit" class="btn btn-default">View/Validate</button>&#160;
+            <div class="form-group pager">
+                <button type="submit" class="btn btn-default">View/Validate</button> 
                 <input type="reset" class="btn btn-default"/>
+                
+                <p class="help-block">'gzip' compressed files can be used to minimize upload times. <br/>No data is stored on server side.</p>
             </div>
         </form>
         <br/>
