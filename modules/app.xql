@@ -342,6 +342,14 @@ declare function app:validate() {
             if (count($records//nav)>1) then
                 <div class="col-md-12">
                     <ul class="nav">
+                    
+                        <li><a href="#checkreportsummary">CheckReport summary</a>
+                        <ul> 
+                        {
+                            for $spans in $records//span[contains(@class, "severity")] group by $type:=$spans
+                                return  <li>{$spans[1]} : {count($spans)}</li>
+                        }</ul>
+                        </li>
                         <li>Targets
                             <ul>
                             {
@@ -360,17 +368,11 @@ declare function app:validate() {
                 else 
                 ()
         }
+                
         <div class="col-md-12">{ $records/div }</div>
         { if (exists($records//div[@data-faildetails])) then
             <div class="col-md-12">
-                <h3>CheckReport summary</h3> 
-                <h4>Distinct items counts</h4>
-                <ul class="list-inline"> 
-                {
-                    for $spans in $records//span[contains(@class, "severity")] group by $type:=$spans
-                        return  <li>{$spans[1]} : {count($spans)}</li>
-                }</ul>
-                
+                <h3 id="checkreportsummary">CheckReport summary</h3> 
                 {
                     for $record in $records//div[@data-report][.//div[@data-faildetails]]
                     return 
