@@ -53,7 +53,7 @@ declare function app:format-failures-report($failures as node()?, $rules as node
                                 let $data-nb := if($f/data) then count($f/data) else "1"
                                 
                                 let $failure-desc := (
-                                    <td rowspan="{$data-nb}"><a href="https://svn.jmmc.fr/jmmc-sw/oiTools/trunk/oitools/rules/DataModelV2_output.html#RULE_{$f/rule}" target="_blank"><span class="label label-{$label-level}">{data($f/rule)}</span></a><br/>{$rule-desc} </td>,
+                                    <td rowspan="{$data-nb}"><a href="https://svn.jmmc.fr/jmmc-sw/oiTools/trunk/oitools/rules/DataModelV2_output.html#RULE_{$f/rule}" target="_blank"><span class="label label-{$label-level} severity-{$label-level} ">{data($f/rule)}</span></a><br/>{$rule-desc} </td>,
                                     <td rowspan="{$data-nb}">{data($hdu)}</td>,
                                     <td rowspan="{$data-nb}">{data($f/member)}</td>
                                 )
@@ -364,6 +364,13 @@ declare function app:validate() {
         { if (exists($records//div[@data-faildetails])) then
             <div class="col-md-12">
                 <h3>CheckReport summary</h3> 
+                <h4>Distinct items counts</h4>
+                <ul class="list-inline"> 
+                {
+                    for $spans in $records//span[contains(@class, "severity")] group by $type:=$spans
+                        return  <li>{$spans[1]} : {count($spans)}</li>
+                }</ul>
+                
                 {
                     for $record in $records//div[@data-report][.//div[@data-faildetails]]
                     return 

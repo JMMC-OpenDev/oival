@@ -17,6 +17,7 @@
             <h3>Dec 2018</h3>
             <ul>
               <li>Accept to check oifits from a given Vizier Catalog name</li>
+              <li>Display the number of distinct rules failures by types in the CheckError summary</li>
             </ul>
         </change>
         <change xmlns="" version="2.7">
