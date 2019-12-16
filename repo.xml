@@ -13,11 +13,18 @@
     <note/>
     <changelog>
         <!-- We start from 2.0 to follow previous oival versions ( php + system call ) -->
-         <change xmlns="" version="2.9">
-            <h3>Nov 2019</h3>
+         <change xmlns="" version="2.10">
+            <h3>Dec 2019</h3>
             <ul>
-              <li>Refactor code to be existdb 5.0 compliant</li>
+              <li>Update OITools to consider a single instrument if every OIWAVELENGHT.insnames starts with INSTRUME keyword.</li>
+            </ul>
+        </change>
+         <change xmlns="" version="2.9">
+            <h3>Dec 2019</h3>
+            <ul>
               <li>Update OITools to fix date unit format (d was not supported)</li>
+              <li>Set severity to INFO for the UNKNOWN_TABLE rule instead of SEVERE</li>
+              <li>Refactor code to be existdb 5.0 compliant</li>
               <li>Add new Help menu entry with documentation link (extracted from the validation code/data model)</li>
             </ul>
         </change>
