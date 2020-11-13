@@ -13,6 +13,12 @@
     <note/>
     <changelog>
         <!-- We start from 2.0 to follow previous oival versions ( php + system call ) -->
+         <change xmlns="" version="2.11">
+            <h3>Nov 2020</h3>
+            <ul>
+              <li>OITools does not check for target name because it relies on external services. OIVal now checks for valid identifiers.</li>
+            </ul>
+        </change>
          <change xmlns="" version="2.10">
             <h3>Dec 2019</h3>
             <ul>

@@ -11,10 +11,8 @@ import module namespace jmmc-oiexplorer="http://exist.jmmc.fr/jmmc-resources/oie
 
 import module namespace jmmc-vizier="http://exist.jmmc.fr/jmmc-resources/vizier" at "/db/apps/jmmc-resources/content/jmmc-vizier.xql";
  (: TODO remove at in  previous import lines :)
+import module namespace jmmc-simbad="http://exist.jmmc.fr/jmmc-resources/simbad";
 
-declare function app:validate($node as node(), $model as map(*), $urls as xs:string*) {
-    (app:validate())
-};
 
 declare function app:show-failures($node as node(), $model as map(*)) {
     let $failures := doc($config:app-root||"/Failures.xml")
@@ -126,8 +124,6 @@ declare function app:show-html($xml as node()*) {
         let $failures := $xml//failures
         let $rules := $xml//rules
 
-        
-        
         return
             <div class="panel panel-default" data-report="" id="oifits{$uuid}">
                 <div class="panel-heading">
@@ -170,11 +166,29 @@ declare function app:show-html($xml as node()*) {
                                     <tr>{for $t in $meta//target[1]/*[not(starts-with(name(.),"nb_"))] return <th>{name($t)}</th>}</tr>
                                     {
                                     for $t in $meta//target return 
+                                        
                                         <tr>{
-                                                for $e in $t/*[not(starts-with(name(.),"nb_"))] return <td>{data($e)}</td>
+                                        let $ra := $t/s_ra
+                                        let $dec := $t/s_dec
+                                        let $name := data($t/target_name)
+                                        let $by-name := jmmc-simbad:resolve-by-name($name, $ra, $dec)
+                                        let $by-coords := if(exists($by-name)) then () else jmmc-simbad:resolve-by-coords($ra, $dec, 0.01)
+                                        let $by-coords := if($by-coords) then 
+                                            (<span>Could be one of : </span>,<ul>
+                                                { for $target in $by-coords 
+                                                    return <li><b>{data($target/name)}</b> <ul class="list-unstyled"><li>{string-join((for $e in ($target/ra,$target/dec) return round-half-to-even($e,3)), " ")}</li><li>{"dist="||round-half-to-even($target/dist,4)}</li></ul></li>
+                                                }
+                                            </ul>)
+                                            else ()
+                                        let $title := if($by-name) then <span class="text-success">Valid identifier</span> else <span class="text-danger"><i class="glyphicon glyphicon-warning-sign"/> Invalid identifier : unknown by Simbad {$by-coords}</span>[empty($by-name)]
+                                        let $title := serialize($title)
+                                        let $icon := if($by-name) then "text-success glyphicon glyphicon-ok-sign" else "text-danger glyphicon glyphicon-exclamation-sign"
+                                        return <td><a href="#" rel="tooltip" data-html="true" data-original-title="{$title}"> <i class="{$icon}"/></a> &#160; {$name}</td>
+                                        ,
+                                                for $e in $t/*[name(.)[not(.='target_name'or starts-with(.,"nb_"))]] return <td>{data($e)}</td>
                                         }</tr>
                                     }
-                            </table>
+                                </table>
                         }
                         
                         <ol id="report{$uuid}" class="breadcrumb">
@@ -300,6 +314,10 @@ declare function app:show-html($xml as node()*) {
                 </div>
             </div>
         </div>
+};
+
+declare function app:validate($node as node(), $model as map(*), $urls as xs:string*) {
+    (app:validate())
 };
 
 (: To be refactored using template when validate.html will be ready :)
