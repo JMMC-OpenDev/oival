@@ -2,7 +2,8 @@ xquery version "3.0";
 
 module namespace app="http://jmmc.fr/apps/oival/templates";
 
-import module namespace templates="http://exist-db.org/xquery/templates" ;
+import module namespace templates="http://exist-db.org/xquery/html-templating";
+import module namespace lib="http://exist-db.org/xquery/html-templating/lib";
 import module namespace config="http://jmmc.fr/apps/oival/config" at "config.xqm";
 
 import module namespace jmmc-about="http://exist.jmmc.fr/jmmc-resources/about" at "/db/apps/jmmc-resources/content/jmmc-about.xql";

@@ -5,7 +5,8 @@
  :)
 xquery version "3.0";
 
-import module namespace templates="http://exist-db.org/xquery/templates" ;
+import module namespace templates="http://exist-db.org/xquery/html-templating";
+import module namespace lib="http://exist-db.org/xquery/html-templating/lib";
 import module namespace jmmc-about="http://exist.jmmc.fr/jmmc-resources/about";
 import module namespace jmmc-web="http://exist.jmmc.fr/jmmc-resources/web";
 
