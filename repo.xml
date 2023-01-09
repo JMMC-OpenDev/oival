@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <meta xmlns="http://exist-db.org/xquery/repo">
-    <description>VO Application Registry</description>
+    <description>JMMC OIFits Validator - web interface</description>
     <author/>
     <website/>
-    <status>alpha</status>
+    <status>stable</status>
     <license/>
     <copyright>true</copyright>
     <type>application</type>
