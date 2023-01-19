@@ -14,8 +14,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-      - uses: actions/setup-node@v3
-      - run: npm update
 
       - name: Checkout oitools
         uses: actions/checkout@v3
@@ -23,6 +21,8 @@ jobs:
           repository: JMMC-OpenDev/oitools
           path: '../oitools'
 
+      - uses: actions/setup-node@v3
+      - run: npm update
       - run: ant
 
      - name: Upload artifacts
