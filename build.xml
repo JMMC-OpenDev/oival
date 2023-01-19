@@ -14,8 +14,8 @@
     </target>
 
   <target name="copyFailures">
-        <copy file="../oitools/rules/Failures.xml" todir="." verbose="true"> </copy>
-        <copy file="../oitools/rules/DataModelV2.xml" todir="." verbose="true"> </copy>
+        <copy file="./oitools/rules/Failures.xml" todir="." verbose="true"> </copy>
+        <copy file="./oitools/rules/DataModelV2.xml" todir="." verbose="true"> </copy>
     </target>
 
 </project>
