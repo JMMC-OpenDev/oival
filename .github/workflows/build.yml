@@ -15,11 +15,11 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-     - name: Checkout oitools
-       uses: actions/checkout@v3
-       with:
-         repository: JMMC-OpenDev/oitools
-         path: '../oitools'
+      - name: Checkout oitools
+        uses: actions/checkout@v3
+        with:
+          repository: JMMC-OpenDev/oitools
+          path: '../oitools'
 
       - uses: actions/setup-node@v3
       - run: npm update
