@@ -13,22 +13,29 @@
     <note/>
     <changelog>
         <!-- We start from 2.0 to follow previous oival versions ( php + system call ) -->
+         <change xmlns="" version="2.12.1">
+            <h3>Mar 2022</h3>
+            <ul>
+              <li>Updated with last smarter oitools.jar</li>
+              <li>Exclude some unused files for a smaller XAR package</li>
+            </ul>
+        </change>
          <change xmlns="" version="2.12.0">
             <h3>Mar 2022</h3>
             <ul>
-              <li>Updated to be eXistDB6 compatible.</li>
+              <li>Updated to be eXistDB6 compatible</li>
             </ul>
         </change>
          <change xmlns="" version="2.11">
             <h3>Nov 2020</h3>
             <ul>
-              <li>OITools does not check for target name because it relies on external services. OIVal now checks for valid identifiers.</li>
+              <li>OITools does not check for target name because it relies on external services. OIVal now checks for valid identifiers</li>
             </ul>
         </change>
          <change xmlns="" version="2.10">
             <h3>Dec 2019</h3>
             <ul>
-              <li>Update OITools to consider a single instrument if every OIWAVELENGHT.insnames starts with INSTRUME keyword.</li>
+              <li>Update OITools to consider a single instrument if every OIWAVELENGHT.insnames starts with INSTRUME keyword</li>
             </ul>
         </change>
          <change xmlns="" version="2.9">

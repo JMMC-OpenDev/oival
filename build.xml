@@ -10,7 +10,7 @@
         <delete dir="${build.dir}" includes="*.xar"/>
 
         <zip basedir="." destfile="${build.dir}/${project.app}-${project.version}.xar"
-	     excludes="${build.dir}/**,.exist/**,target/**,build.xml,pom.xml"/>
+          excludes="${build.dir}/**,oitools/**,.exist/**,target/**,build.xml,pom.xml"/>
     </target>
 
   <target name="copyFailures">
