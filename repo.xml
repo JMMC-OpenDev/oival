@@ -13,11 +13,12 @@
     <note/>
     <changelog>
         <!-- We start from 2.0 to follow previous oival versions ( php + system call ) -->
-         <change xmlns="" version="2.13.0">
+         <change xmlns="" version="2.13.1">
             <h3>Mar 2022</h3>
             <ul>
               <li>Updated with last smarter oitools.jar</li>
               <li>Exclude some unused files for a smaller XAR package</li>
+              <li>Move rules page from old svn to github</li>
             </ul>
         </change>
          <change xmlns="" version="2.12.0">
