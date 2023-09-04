@@ -13,6 +13,12 @@
     <note/>
     <changelog>
         <!-- We start from 2.0 to follow previous oival versions ( php + system call ) -->
+        <change xmlns="" version="2.14.1">
+            <h3>Sept 2023</h3>
+            <ul>
+              <li>Move main jmmc image's url over https</li>
+            </ul>
+        </change>
          <change xmlns="" version="2.13.1">
             <h3>Mar 2022</h3>
             <ul>
