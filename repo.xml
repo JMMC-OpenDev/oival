@@ -17,6 +17,7 @@
             <h3>Sept 2023</h3>
             <ul>
               <li>Move main jmmc image's url over https</li>
+              <li>Add Oitools in the Help menu and provide better links for OIFits V1-2 rules</li>
             </ul>
         </change>
          <change xmlns="" version="2.13.1">
