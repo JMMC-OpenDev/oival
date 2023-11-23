@@ -24,43 +24,43 @@ declare function app:show-failures($node as node(), $model as map(*)) {
 declare function app:format-check-report($report as xs:string) as node()*{
   let $lines := tokenize($report, "&#10;")
   let $styles := <styles><s><t>INFO</t><c>text-info</c></s><s><t>WARNING</t><c>text-warning</c></s><s><t>SEVERE</t><c>text-danger</c></s></styles>
-  let $els := for $line in $lines  
-                    let $class:=for $t in $styles//t return if(starts-with(normalize-space($line), $t)) then data($styles//s[t=$t]/c) else () 
+  let $els := for $line in $lines
+                    let $class:=for $t in $styles//t return if(starts-with(normalize-space($line), $t)) then data($styles//s[t=$t]/c) else ()
                     return <li class="{$class}">{$line}</li>
   return <ul class="list-unstyled">{$els}</ul>
 };
 
 declare function app:format-failures-report($failures as node()?, $rules as node()?) as node()*{
 (:    let $profile := $failures/profile:)
-    
-(: with grouping :)    
+
+(: with grouping :)
 (:    let $res := for $f-by-hdus in $failures//failure group by $hdu := $f-by-hdus/extName||"#"||$f-by-hdus/extNb:)
 (:                    return:)
 (:                        ( :)
 (:                            for $f at $pos in $f-by-hdus :)
-(: without grouping :) 
+(: without grouping :)
         let $res :=        (    for $f at $pos in $failures//failure
                                 let $hdu := $f/extName||"#"||$f/extNb
 
-                                let $label-level := switch ($f/severity) 
+                                let $label-level := switch ($f/severity)
                                     case "SEVERE" return "danger"
                                     case "WARNING" return "warning"
                                     case "INFO" return "info"
                                     default return "default"
                                 let $rule-desc := data($rules//rule[name=$f/rule]/description)
-                                
+
                                 let $data-nb := if($f/data) then count($f/data) else "1"
-                                
+
                                 let $failure-desc := (
                                     <td rowspan="{$data-nb}"><a href="https://jmmc-opendev.github.io/oitools/rules/DataModelV2_output.html#RULE_{$f/rule}" target="_blank"><span class="label label-{$label-level} severity-{$label-level} ">{data($f/rule)}</span></a><br/>{$rule-desc} </td>,
                                     <td rowspan="{$data-nb}">{data($hdu)}</td>,
                                     <td rowspan="{$data-nb}">{data($f/member)}</td>
                                 )
-                                
-                                return 
+
+                                return
                                     if ($f/data)
                                     then
-                                        for $d at $pos in $f/data return 
+                                        for $d at $pos in $f/data return
                                             <tr>
                                                 {if ($pos=1) then $failure-desc else () }
                                                 <td>{replace($d/message,"\|", ", ")}</td>
@@ -72,16 +72,16 @@ declare function app:format-failures-report($failures as node()?, $rules as node
                                                 <td>{data($d/limit)}</td>
                                                 <td>{data($d/detail)}</td>
                                             </tr>
-                                    else 
+                                    else
                                         <tr>{($failure-desc)}<td colspan="7">{data($f/message)}</td></tr>
-                                
+
                         )
-    return 
+    return
         <div class="table-responsive">
             <p> Severity legend:
                 {
                 for $severity in distinct-values($failures//failure/severity)
-                                let $label-level := switch ($severity) 
+                                let $label-level := switch ($severity)
                                     case "SEVERE" return "danger"
                                     case "WARNING" return "warning"
                                     case "INFO" return "info"
@@ -111,7 +111,81 @@ declare function app:format-failures-report($failures as node()?, $rules as node
 };
 
 
-(: 
+declare function app:show-provenance($prim-hdu-keywords,$filename ){
+    <div>
+        <h2>Provenance of {$filename}</h2>
+            {
+            let $kws := $prim-hdu-keywords[starts-with(name,"HIERARCH.ESO.PRO.REC")]
+
+            let $rec-prefix := "HIERARCH.ESO.PRO.REC"
+            let $rec-prefix-len := string-length($rec-prefix)
+            let $rec-kws := $kws[starts-with(name, $rec-prefix)]
+            let $dls := map{
+                "PROCSOFT" : data($prim-hdu-keywords[name = "PROCSOFT"]/value),
+                "DRS ID": string-join(distinct-values($rec-kws[ends-with(name,".DRS.ID")]/value), ", ") ,
+                "PIPELINE ID": string-join(distinct-values($rec-kws[ends-with(name,".PIPE.ID")]/value), ", ")
+            }
+
+            return (
+                <dl>{ map:for-each( $dls, function ($k, $v){ if(exists($v) and string-length($v)>0 ) then (<dt>{$k}</dt>,<dd>{$v}</dd>) else () }) }</dl>
+                ,<ol>{
+                for $kw in $rec-kws  group by $step := substring-before(substring-after($kw,$rec-prefix),".")
+                    (:prepare prefixes :)
+                    let $step-prefix := $rec-prefix||$step (: e.g.: HIERARCH.ESO.PRO.REC1 :)
+                    let $raw-prefix := $step-prefix|| ".RAW"
+                    let $cal-prefix := $step-prefix|| ".CAL"
+                    let $param-prefix := $step-prefix|| ".PARAM"
+
+                    (: first step kw filter :)
+                    let $step-kws := $kws[starts-with(name,$step-prefix)]
+
+                    (: get rec-id :)
+                    let $rec-id := $step-kws[name=$step-prefix||".ID"]
+
+                    (: get params :)
+                    let $step-params := $step-kws[starts-with(name, $param-prefix)]
+                    let $step-params-names := $step-params[ends-with(name, ".NAME")]
+
+                    (: get raws :)
+                    let $step-files := $step-kws[starts-with(name, $raw-prefix) or starts-with(name, $cal-prefix)]
+                    let $file-names := $step-files[ends-with(name, "NAME")]
+                    let $file-catgs := $step-files[ends-with(name, "CATG")]
+
+
+                    (: we may study other more efficient analysis approaches to avoid multiple whole scan per category
+                    e.g. :
+                    let $els := for $kw in $step-kw
+                        return
+                            if(name=$step-prefix||".ID") then <rec>{$kw}</rec>
+                            if(contains(name, ".PARAM")) then <param>{$kw}</param>
+                    OR rebuild a tree with HIERARCH/ESO/PRO/[REC1,...,RECN]/ or map of RECS:{1:RAW:1,...N,...,N:{}}
+                    :)
+
+                    return
+                        <li>
+                        { $rec-id/value/text() }
+                        { for $n in $step-params-names
+                            let $v := $step-params[name=substring-before($n,".NAME")||".VALUE"]
+                            let $v := if($v) then <var>{normalize-space($v/value)}</var> else ()
+                            let $pname := " -"||normalize-space($n/value)
+                            let $pname := if(exists($v)) then $pname||"=" else $pname
+                            return
+                            ($pname,$v)
+                        }&#160;
+                        {
+                          for $n at $pos in $file-names group by $catg := data($file-catgs[$pos]/value)
+                            let $prefix := if($catg) then $catg ||"=[" else "["
+                            return ($prefix, <var>{string-join($n/value,", ")}</var>, "]")
+                        }
+                        </li>
+
+                }</ol>
+            )
+            }
+        </div>
+};
+
+(:
    TODO add xqldoc, and split code in multiple functions
  :)
 declare function app:show-html($xml as node()*) {
@@ -133,13 +207,13 @@ declare function app:show-html($xml as node()*) {
                     </h3>
                 </div>
                 <div class="panel-body">
-                <!-- Nav bar -->
+                <!-- Nav bar to provide acce on data content -->
                 <nav  class="navbar navbar-default navbar-static" role="navigation">
                     <ul class="nav navbar-nav">
                     <li><p class="navbar-text" data-filename=""><b>{$xml/url||$xml/filename}</b></p></li><!-- data-filename put for futur retrieval -->
                     <li><a href="#granules{$uuid}">Granules ({count($xml//metadata//target)})</a></li>
-                    { if ($prim-hdu-keywords) then <li><a href="#prim-hdu-keywords-{$uuid}">Primary HDU keywords ({count($prim-hdu-keywords)})</a></li> else () }
                     <li ><a href="#report{$uuid}">Check report&#160;{if($chech-report-severity) then <i class="glyphicon glyphicon-warning-sign"/> else ()}</a></li>
+                    { if ($prim-hdu-keywords) then <li><a href="#prim-hdu-keywords-{$uuid}">Primary HDU keywords ({count($prim-hdu-keywords)})</a></li> else () }
                     <li class="dropdown">
                         <a href="#" class="dropdown-toggle" data-toggle="dropdown">OI_Tables ({count($oitables)}) <b class="caret"></b></a>
                         <ul class="dropdown-menu">
@@ -155,6 +229,9 @@ declare function app:show-html($xml as node()*) {
                   <li>&#160;</li>
                 </ul>
                 </nav>
+
+                {app:show-provenance($prim-hdu-keywords, $filename)}
+
                 <div>
                         <ol id="granules{$uuid}" class="breadcrumb">
                           <li><a href="#top">TOP^</a></li>
@@ -166,17 +243,17 @@ declare function app:show-html($xml as node()*) {
                             return <table class="table table-bordered table-condensed table-hover">
                                     <tr>{for $t in $meta//target[1]/*[not(starts-with(name(.),"nb_"))] return <th>{name($t)}</th>}</tr>
                                     {
-                                    for $t in $meta//target return 
-                                        
+                                    for $t in $meta//target return
+
                                         <tr>{
                                         let $ra := $t/s_ra
                                         let $dec := $t/s_dec
                                         let $name := data($t/target_name)
                                         let $by-name := jmmc-simbad:resolve-by-name($name, $ra, $dec)
                                         let $by-coords := if(exists($by-name)) then () else jmmc-simbad:resolve-by-coords($ra, $dec, 0.01)
-                                        let $by-coords := if($by-coords) then 
+                                        let $by-coords := if($by-coords) then
                                             (<span>Could be one of : </span>,<ul>
-                                                { for $target in $by-coords 
+                                                { for $target in $by-coords
                                                     return <li><b>{data($target/name)}</b> <ul class="list-unstyled"><li>{string-join((for $e in ($target/ra,$target/dec) return round-half-to-even($e,3)), " ")}</li><li>{"dist="||round-half-to-even($target/dist,4)}</li></ul></li>
                                                 }
                                             </ul>)
@@ -191,7 +268,7 @@ declare function app:show-html($xml as node()*) {
                                     }
                                 </table>
                         }
-                        
+
                         <ol id="report{$uuid}" class="breadcrumb">
                           <li><a href="#top">TOP^</a></li>
                           <li><a href="#oifits{$uuid}">OIFits</a></li>
@@ -199,7 +276,7 @@ declare function app:show-html($xml as node()*) {
                         </ol>
                         {app:format-check-report($check-report)}
                         <hr/>
-                        
+
                         { if (empty($failures//failure)) then () else
                         <div class="panel-group">
                           <div class="panel panel-default">
@@ -214,14 +291,14 @@ declare function app:show-html($xml as node()*) {
                           </div>
                         </div>
                         }
-                        
+
                         { if ( $prim-hdu-keywords ) then
                         (<ol id="prim-hdu-keywords-{$uuid}" class="breadcrumb">
                           <li><a href="#top">TOP^</a></li>
                           <li><a href="#oifits{$uuid}">OIFits</a></li>
                           <li class="active">Primary HDU keywords</li>
                         </ol>,
-                        <p> 
+                        <p>
                             <button data-toggle="modal" data-target="#hdu-keywords-{$uuid}">Display primary HDU keywords ({count($prim-hdu-keywords)})</button>
                             <!-- Modal view for primary HDU keywords -->
                             <div class="modal fade" id="hdu-keywords-{$uuid}" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true">
@@ -244,11 +321,11 @@ declare function app:show-html($xml as node()*) {
                                   </div>
                                 </div>
                               </div>
-                            </div>                            
+                            </div>
                         </p>)
                         else <p>No primary HDU keywords</p>
                         }
-                        
+
                         <ol id="tables{$uuid}" class="breadcrumb">
                           <li><a href="#top">TOP^</a></li>
                           <li><a href="#oifits{$uuid}">OIFits</a></li>
@@ -266,7 +343,7 @@ declare function app:show-html($xml as node()*) {
                             for $oidata at $pos in $oitables
                             let $label := "#"||$pos||" "||name($oidata)
                             let $anchor := "table_"||$pos||"_"||$uuid
-                            return 
+                            return
                                 <div class="panel panel-default" id="{$anchor}">
                                     <ol class="breadcrumb">
                                       <li><a href="#top">TOP^</a></li>
@@ -280,24 +357,24 @@ declare function app:show-html($xml as node()*) {
                                     }</tr>{
                                         for $k in $oidata/keywords/keyword return <tr> {for $e in $k/* return <td>{data($e)}</td>}</tr>
                                     }</table>
-                            
+
                                     {
                                     if(name($oidata)=("OI_TARGET","OI_ARRAY","OI_WAVELENGTH"))
                                     then
                                         (<h4>Table data</h4>
                                         ,<table class="table table-bordered table-condensed table-hover"><tr>{
-                                            for $c in $oidata/columns/column 
+                                            for $c in $oidata/columns/column
                                                 let $unit := tokenize($c/unit,"\|")
                                                 let $unit := if(exists($unit)) then concat(" [",$unit[last()],"]") else ()
-                                                return 
+                                                return
                                                 <th><a title="{$c/description}">{data($c/name)} {$unit}</a></th>
                                             }</tr>
                                             {
                                                 let $trs := $oidata/table/tr[td]
                                                 let $count := count($trs)
                                                 let $cut := 5
-                                                return 
-                                                    if ($count<=2*$cut) then 
+                                                return
+                                                    if ($count<=2*$cut) then
                                                         $trs
                                                     else
                                                         let $first-trs := subsequence($trs, 1, $cut)
@@ -311,7 +388,7 @@ declare function app:show-html($xml as node()*) {
                                     }
                                 </div>
                         }
-                    
+
                 </div>
             </div>
         </div>
@@ -322,48 +399,48 @@ declare function app:validate($node as node(), $model as map(*), $urls as xs:str
 };
 
 (: To be refactored using template when validate.html will be ready :)
-declare function app:validate() {  
+declare function app:validate() {
     (: read input params :)
     let $urls := request:get-parameter("urls", ())
     let $url-list := distinct-values( for $u in $urls return tokenize($u, "[,\s]+") )
     let $upload-filename := request:get-uploaded-file-name("userfile")
     let $cat := request:get-parameter("cat", ())
-    
+
     (: build one record per oifits source:)
     let $ret1 := for $u in $url-list return <record><url>{$u}</url>{ try { jmmc-oiexplorer:to-xml($u) } catch * { <error>{$err:description}</error> } }</record>
     let $ret2 := if($upload-filename) then <record><filename>{$upload-filename}</filename>{ try { jmmc-oiexplorer:to-xml(request:get-uploaded-file-data("userfile"))  } catch * {<error>{$err:description}</error> }}</record> else ()
-    
-    let $ret3 := if($cat) then 
+
+    let $ret3 := if($cat) then
         try{
             let $urls := jmmc-vizier:catalog-fits($cat)
-            for $url in $urls return <record><cat>{$cat}</cat><url>{$url}</url>{ try { jmmc-oiexplorer:to-xml($url) } catch * { <error>CAT {$cat} {$err:description}</error> } }</record> 
+            for $url in $urls return <record><cat>{$cat}</cat><url>{$url}</url>{ try { jmmc-oiexplorer:to-xml($url) } catch * { <error>CAT {$cat} {$err:description}</error> } }</record>
         } catch * {
             <record><cat>{$cat}</cat><error>VizieR catalog {$cat} not found&#10;<br/> {$err:description}</error> </record>
         }
         else ()
     let $ret := ($ret1,$ret2,$ret3)
-    
+
     (: transform each record into html :)
     let $records := <records>{for $e in $ret return app:show-html($e)}</records>
-    
+
     (: and summarize the whole results after a display of the errors :)
     let $res := <div >
         {
-            for $e in $ret[error] 
+            for $e in $ret[error]
                 let $filename := tokenize($e/url||$e/filename,"/")[last()] || $e/cat
             return
                 <div class="alert alert-danger alert-dismissable fade in">
                     <i class="icon icon-times-circle icon-lg"></i>
                     <strong>{$filename}</strong> : {data($e/error)}
                 </div>
-                
+
             ,
             if (count($records//nav)>1) then
                 <div class="col-md-12">
                     <ul class="nav">
-                    
+
                         <li><a href="#checkreportsummary">CheckReport summary</a>
-                        <ul> 
+                        <ul>
                         {
                             for $spans in $records//span[contains(@class, "severity")] group by $type:=$spans
                                 return  <li>{$spans[1]} : {count($spans)}</li>
@@ -384,22 +461,22 @@ declare function app:validate() {
                         </li>
                     </ul>
                 </div>
-                else 
+                else
                 ()
         }
-                
+
         <div class="col-md-12">{ $records/div }</div>
         { if (exists($records//div[@data-faildetails])) then
             <div class="col-md-12">
-                <h3 id="checkreportsummary">CheckReport summary</h3> 
+                <h3 id="checkreportsummary">CheckReport summary</h3>
                 {
                     for $record in $records//div[@data-report][.//div[@data-faildetails]]
-                    return 
+                    return
                         (<h4>{data($record//p[@data-filename])}</h4>, $record//div[@data-faildetails])
                 }
             </div>
         else () }
     </div>
-    
+
     return $res
 };

@@ -13,8 +13,14 @@
     <note/>
     <changelog>
         <!-- We start from 2.0 to follow previous oival versions ( php + system call ) -->
+        <change xmlns="" version="2.15.0">
+            <h3>Nov 2023</h3>
+            <ul>
+              <li>Add provenance sections</li>
+            </ul>
+        </change>
         <change xmlns="" version="2.14.1">
-            <h3>Sept 2023</h3>
+            <h3>Sep 2023</h3>
             <ul>
               <li>Move main jmmc image's url over https</li>
               <li>Add Oitools in the Help menu and provide better links for OIFits V1-2 rules</li>
