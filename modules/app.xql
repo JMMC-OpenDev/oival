@@ -11,8 +11,7 @@ import module namespace jmmc-about="http://exist.jmmc.fr/jmmc-resources/about" a
 import module namespace jmmc-oiexplorer="http://exist.jmmc.fr/jmmc-resources/oiexplorer" at "/db/apps/jmmc-resources/content/jmmc-oiexplorer.xql";
 
 import module namespace jmmc-vizier="http://exist.jmmc.fr/jmmc-resources/vizier" at "/db/apps/jmmc-resources/content/jmmc-vizier.xql";
- (: TODO remove at in  previous import lines :)
-import module namespace jmmc-simbad="http://exist.jmmc.fr/jmmc-resources/simbad";
+import module namespace jmmc-simbad="http://exist.jmmc.fr/jmmc-resources/simbad" at "/db/apps/jmmc-resources/content/jmmc-simbad.xql";
 
 
 declare function app:show-failures($node as node(), $model as map(*)) {
