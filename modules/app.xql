@@ -112,7 +112,7 @@ declare function app:format-failures-report($failures as node()?, $rules as node
 
 declare function app:show-provenance($prim-hdu-keywords,$filename ){
     <div>
-        <h2>Provenance of {$filename}</h2>
+        <h2>Data reduction information extracted from the headers:</h2>
             {
             let $kws := $prim-hdu-keywords[starts-with(name,"HIERARCH.ESO.PRO.REC")]
 
@@ -125,9 +125,11 @@ declare function app:show-provenance($prim-hdu-keywords,$filename ){
                 "PIPELINE ID": string-join(distinct-values($rec-kws[ends-with(name,".PIPE.ID")]/value), ", ")
             }
 
-            return (
-                <dl>{ map:for-each( $dls, function ($k, $v){ if(exists($v) and string-length($v)>0 ) then (<dt>{$k}</dt>,<dd>{$v}</dd>) else () }) }</dl>
-                ,<ol>{
+            return <dl>{
+                 map:for-each( $dls, function ($k, $v){ if(exists($v) and string-length($v)>0 ) then (<dt>{$k}</dt>,<dd>{$v}</dd>) else () })
+                , if( empty($rec-kws) ) then () else
+                (<dt>HIERARCH ESO RECipies:</dt>,<dd>
+                <ul>{
                 for $kw in $rec-kws  group by $step := substring-before(substring-after($kw,$rec-prefix),".")
                     (:prepare prefixes :)
                     let $step-prefix := $rec-prefix||$step (: e.g.: HIERARCH.ESO.PRO.REC1 :)
@@ -161,26 +163,24 @@ declare function app:show-provenance($prim-hdu-keywords,$filename ){
                     :)
 
                     return
-                        <li>
-                        { $rec-id/value/text() }
+                        <li><ul class="list-inline">
+                        <b>{ $rec-id/value/text() }&#160;</b>
                         { for $n in $step-params-names
                             let $v := $step-params[name=substring-before($n,".NAME")||".VALUE"]
                             let $v := if($v) then <var>{normalize-space($v/value)}</var> else ()
-                            let $pname := " -"||normalize-space($n/value)
-                            let $pname := if(exists($v)) then $pname||"=" else $pname
+                            let $pname := <b>&#160;--{normalize-space($n/value)}</b>
+                            let $pname := if(exists($v)) then ($pname,"=") else $pname
                             return
-                            ($pname,$v)
+                            <li>{$pname,$v}</li>
                         }&#160;
                         {
                           for $n at $pos in $file-names group by $catg := data($file-catgs[$pos]/value)
-                            let $prefix := if($catg) then $catg ||"=[" else "["
-                            return ($prefix, <var>{string-join($n/value,", ")}</var>, "]")
+                            return <li><b>{$catg}</b>=[<var>{string-join($n/value,", ")}</var>]</li>
                         }
-                        </li>
+                        </ul></li>
 
-                }</ol>
-            )
-            }
+                }</ul></dd>)
+            }</dl>}
         </div>
 };
 
@@ -228,8 +228,6 @@ declare function app:show-html($xml as node()*) {
                   <li>&#160;</li>
                 </ul>
                 </nav>
-
-                {app:show-provenance($prim-hdu-keywords, $filename)}
 
                 <div>
                         <ol id="granules{$uuid}" class="breadcrumb">
@@ -321,6 +319,7 @@ declare function app:show-html($xml as node()*) {
                                 </div>
                               </div>
                             </div>
+                            {app:show-provenance($prim-hdu-keywords, $filename)}
                         </p>)
                         else <p>No primary HDU keywords</p>
                         }

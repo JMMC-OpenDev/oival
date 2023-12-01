@@ -16,7 +16,7 @@
         <change xmlns="" version="2.15.0">
             <h3>Nov 2023</h3>
             <ul>
-              <li>Add provenance sections</li>
+              <li>Add a datareduction extract on top of headers.</li>
             </ul>
         </change>
         <change xmlns="" version="2.14.1">
